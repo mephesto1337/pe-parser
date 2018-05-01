@@ -242,7 +242,7 @@ pub fn parse_optional_header(i: &[u8]) -> IResult<&[u8], OptionalHeader> {
 
 named!(pub parse_section_header<SectionHeader>,
     do_parse!(
-            _name:                      count_fixed!(u8, le_u8, 8)
+            _name:                      take_str!(8)
         >>  _physical_address:          le_u32
         >>  _virtual_address:           le_u32
         >>  _size_of_raw_data:          le_u32

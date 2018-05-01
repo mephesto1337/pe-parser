@@ -116,8 +116,8 @@ pub enum OptionalHeader {
 }
 
 #[derive(Debug)]
-pub struct SectionHeader {
-    pub name:                   [u8; 8],
+pub struct SectionHeader<'a> {
+    pub name:                   &'a str,
     pub physical_address:       u32,
     pub virtual_address:        u32,
     pub size_of_raw_data:       u32,
@@ -131,9 +131,9 @@ pub struct SectionHeader {
 
 
 #[derive(Debug)]
-pub struct PeHeader {
+pub struct PeHeader<'a> {
     pub signature:          u32,
     pub file_header:        FileHeader,
     pub optional_header:    OptionalHeader,
-    pub sections:           Vec<SectionHeader>
+    pub sections:           Vec<SectionHeader<'a>>
 }
