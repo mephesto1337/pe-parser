@@ -131,6 +131,7 @@ pub struct SectionHeader<'a> {
 
 #[derive(Debug)]
 pub struct PeHeader<'a> {
+    pub data:               &'a [u8],
     pub signature:          u32,
     pub file_header:        FileHeader,
     pub optional_header:    OptionalHeader,

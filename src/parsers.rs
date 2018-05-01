@@ -276,17 +276,19 @@ fn parse_pe_magic(i: &[u8]) -> IResult<&[u8], u32> {
     }
 }
 
-named!(pub parse_pe_header<PeHeader>,
+pub fn parse_pe_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], PeHeader<'a>> {
     do_parse!(
+        i,
             _signature:         parse_pe_magic
         >>  _file_header:       parse_file_header
         >>  _optional_header:   parse_optional_header
         >>  _sections:          count!(parse_section_header, _file_header.number_of_sections as usize)
         >>  ( PeHeader {
+            data:               i,
             signature:          _signature,
             file_header:        _file_header,
             optional_header:    _optional_header,
             sections:           _sections
         })
     )
-);
+}

@@ -12,6 +12,7 @@ enum_primitive = "^0.1"
 clap = "~2.27"
 failure = "^0.1"
 libc = "0.2"
+exe = { path = "../exe", version = "^0.1" }
 
 [dependencies.nom]
 version = "4.0.0-beta3"
