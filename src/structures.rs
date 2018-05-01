@@ -129,7 +129,6 @@ pub struct SectionHeader<'a> {
     pub characteristics:        u32,
 }
 
-
 #[derive(Debug)]
 pub struct PeHeader<'a> {
     pub signature:          u32,
