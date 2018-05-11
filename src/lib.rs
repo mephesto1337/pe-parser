@@ -2,10 +2,13 @@
 
 #[macro_use] extern crate nom;
 #[macro_use] extern crate enum_primitive;
-extern crate exe;
+#[macro_use] extern crate exe;
+extern crate libc;
 
 #[allow(dead_code)]
 #[allow(unused_macros)]
+
+use libc::{size_t, uint8_t, c_void};
 
 pub mod enums;
 pub use enums::*;
@@ -15,7 +18,6 @@ pub use structures::*;
 
 pub mod parsers;
 pub use parsers::*;
-
 
 impl<'a> exe::Section for SectionHeader<'a> {
     fn get_flags(&self) -> u32 {
@@ -69,10 +71,37 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+#[no_mangle]
+pub extern fn rs_parse_dos<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
+    let buf = unsafe { ::std::slice::from_raw_parts(i as *const u8, len) };
+
+    match parse_dos_header(buf) {
+        Ok((_, dos)) => Box::into_raw(Box::new(dos)) as *const c_void,
+        Err(e) => {
+            eprintln!("{:?}", e.into_error_kind());
+            ::std::ptr::null::<c_void>()   
+        }
     }
 }
+
+#[no_mangle]
+pub extern fn rs_dos_get_lfanew<'a>(dos: *mut c_void) -> size_t {
+    assert_ne!(dos, ::std::ptr::null_mut());
+    let bd = unsafe { Box::from_raw(dos as *mut DosHeader) };
+    bd.e_lfanew as size_t
+}
+
+#[no_mangle]
+pub extern fn rs_parse_pe<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
+    let buf = unsafe { ::std::slice::from_raw_parts(i as *const u8, len) };
+
+    match parse_pe_header(buf) {
+        Ok((_, pe)) => Box::into_raw(Box::new(pe)) as *const c_void,
+        Err(e) => {
+            eprintln!("{:?}", e.into_error_kind());
+            ::std::ptr::null::<c_void>()
+        }
+    }
+}
+
+generate_c_api!(SectionHeader<'a>, PeHeader<'a>);
