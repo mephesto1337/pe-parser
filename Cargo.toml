@@ -5,7 +5,7 @@ authors = ["Thomas WACHE <thomas@wache.fr>"]
 
 [lib]
 name = "pe"
-crate-type = ["staticlib", "rlib"]
+crate-type = ["staticlib", "dylib", "rlib"]
 
 [dependencies]
 enum_primitive = "^0.1"

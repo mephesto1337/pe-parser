@@ -1,6 +1,7 @@
 use enum_primitive::FromPrimitive;
 use nom;
 
+#[allow(unused_macros)]
 macro_rules! parse_u8_enum {
     ($funcname:ident, $enum:ident) => (
         pub fn $funcname(i: &[u8]) -> nom::IResult<&[u8], $enum> {
@@ -17,6 +18,7 @@ macro_rules! parse_u8_enum {
     )
 }
 
+#[allow(unused_macros)]
 macro_rules! parse_u16_enum {
     ($funcname:ident, $enum:ident) => (
         pub fn $funcname(i: &[u8]) -> nom::IResult<&[u8], $enum> {
@@ -33,6 +35,7 @@ macro_rules! parse_u16_enum {
     )
 }
 
+#[allow(unused_macros)]
 macro_rules! parse_u32_enum {
     ($funcname:ident, $enum:ident) => (
         pub fn $funcname(i: &[u8]) -> nom::IResult<&[u8], $enum> {
