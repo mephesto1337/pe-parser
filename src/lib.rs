@@ -59,6 +59,13 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
         self.sections.iter().nth(idx)
     }
 
+    fn get_section_name_at(&self, idx: usize) -> Option<&str> {
+        match self.sections.iter().nth(idx) {
+            Some(s) => Some(s.name),
+            None => None
+        }
+    }
+
     fn get_data(&self, start: usize, len: usize) -> &[u8] {
         &self.data[start .. (start + len)]
     }
@@ -72,7 +79,7 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
 }
 
 #[no_mangle]
-pub extern fn rs_parse_dos<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
+pub extern fn rs_pe_parse_dos<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
     let buf = unsafe { ::std::slice::from_raw_parts(i as *const u8, len) };
 
     match parse_dos_header(buf) {
@@ -85,23 +92,34 @@ pub extern fn rs_parse_dos<'a>(i: *const uint8_t, len: size_t) -> *const c_void 
 }
 
 #[no_mangle]
-pub extern fn rs_dos_get_lfanew<'a>(dos: *mut c_void) -> size_t {
-    assert_ne!(dos, ::std::ptr::null_mut());
-    let bd = unsafe { Box::from_raw(dos as *mut DosHeader) };
-    bd.e_lfanew as size_t
-}
-
-#[no_mangle]
-pub extern fn rs_parse_pe<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
+pub extern fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
     let buf = unsafe { ::std::slice::from_raw_parts(i as *const u8, len) };
 
-    match parse_pe_header(buf) {
-        Ok((_, pe)) => Box::into_raw(Box::new(pe)) as *const c_void,
+    match parse_dos_header(buf) {
+        Ok((_, dos)) => {
+            let off = dos.e_lfanew as usize;
+            match parse_pe_header(&buf[off..]) {
+                Ok((_, pe)) => Box::into_raw(Box::new(pe)) as *const c_void,
+                Err(e) => {
+                    eprintln!("{:?}", e.into_error_kind());
+                    ::std::ptr::null::<c_void>()
+                }
+            }
+        },
         Err(e) => {
             eprintln!("{:?}", e.into_error_kind());
-            ::std::ptr::null::<c_void>()
+            ::std::ptr::null::<c_void>()   
         }
     }
 }
 
-generate_c_api!(SectionHeader<'a>, PeHeader<'a>);
+generate_c_api!(SectionHeader<'a>, PeHeader<'a>,
+    rs_pe_get_flags,
+    rs_pe_get_offset,
+    rs_pe_get_size,
+    rs_pe_get_number_of_sections,
+    rs_pe_get_section_at,
+    rs_pe_get_section_name_at,
+    rs_pe_get_data,
+    rs_pe_free_exe
+);
