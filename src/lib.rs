@@ -100,16 +100,10 @@ pub extern fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
             let off = dos.e_lfanew as usize;
             match parse_pe_header(&buf[off..]) {
                 Ok((_, pe)) => Box::into_raw(Box::new(pe)) as *const c_void,
-                Err(e) => {
-                    eprintln!("{:?}", e.into_error_kind());
-                    ::std::ptr::null::<c_void>()
-                }
+                Err(_) => ::std::ptr::null::<c_void>()
             }
         },
-        Err(e) => {
-            eprintln!("{:?}", e.into_error_kind());
-            ::std::ptr::null::<c_void>()   
-        }
+        Err(_) => ::std::ptr::null::<c_void>()
     }
 }
 
