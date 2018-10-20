@@ -1,12 +1,12 @@
-use nom::*;
 use enums::*;
+use nom::*;
 use structures::*;
 
 fn parse_dos_magic(i: &[u8]) -> IResult<&[u8], u16> {
     let (r, t) = tag!(i, "MZ")?;
     match le_u16(t) {
         Ok((_, m)) => Ok((r, m)),
-        Err(e) => Err(e)
+        Err(e) => Err(e),
     }
 }
 
@@ -89,139 +89,141 @@ named!(pub parse_data_directory<DataDirectory>,
     )
 );
 
-named!(parse_optional_header32<OptionalHeader32>,
+named!(
+    parse_optional_header32<OptionalHeader32>,
     do_parse!(
-            _magic:                          parse_optional_header_magic
-        >>  _major_linker_version:           le_u8
-        >>  _minor_linker_version:           le_u8
-        >>  _size_of_code:                   le_u32
-        >>  _size_of_initialized_data:       le_u32
-        >>  _size_of_uninitialized_data:     le_u32
-        >>  _address_of_entry_point:         le_u32
-        >>  _base_of_code:                   le_u32
-        >>  _base_of_data:                   le_u32
-        >>  _image_base:                     le_u32
-        >>  _section_alignment:              le_u32
-        >>  _file_alignment:                 le_u32
-        >>  _major_operating_system_version: le_u16
-        >>  _minor_operating_system_version: le_u16
-        >>  _major_image_version:            le_u16
-        >>  _minor_image_version:            le_u16
-        >>  _major_subsystem_version:        le_u16
-        >>  _minor_subsystem_version:        le_u16
-        >>  _win32_version_value:            le_u32
-        >>  _size_of_image:                  le_u32
-        >>  _size_of_headers:                le_u32
-        >>  _check_sum:                      le_u32
-        >>  _subsystem:                      parse_subsystem
-        >>  _dll_characteristics:            parse_dll_characteristics
-        >>  _size_of_stack_reserve:          le_u32
-        >>  _size_of_stack_commit:           le_u32
-        >>  _size_of_heap_reserve:           le_u32
-        >>  _size_of_heap_commit:            le_u32
-        >>  _loader_flags:                   le_u32
-        >>  _number_of_rva_and_sizes:        verify!(le_u32, |x| x == 16u32)
-        >>  _data_directory:                 count_fixed!(DataDirectory, parse_data_directory, 16)
-        >>  ( OptionalHeader32 {
-            magic:                          _magic,
-            major_linker_version:           _major_linker_version,
-            minor_linker_version:           _minor_linker_version,
-            size_of_code:                   _size_of_code,
-            size_of_initialized_data:       _size_of_initialized_data,
-            size_of_uninitialized_data:     _size_of_uninitialized_data,
-            address_of_entry_point:         _address_of_entry_point,
-            base_of_code:                   _base_of_code,
-            base_of_data:                   _base_of_data,
-            image_base:                     _image_base,
-            section_alignment:              _section_alignment,
-            file_alignment:                 _file_alignment,
-            major_operating_system_version: _major_operating_system_version,
-            minor_operating_system_version: _minor_operating_system_version,
-            major_image_version:            _major_image_version,
-            minor_image_version:            _minor_image_version,
-            major_subsystem_version:        _major_subsystem_version,
-            minor_subsystem_version:        _minor_subsystem_version,
-            win32_version_value:            _win32_version_value,
-            size_of_image:                  _size_of_image,
-            size_of_headers:                _size_of_headers,
-            check_sum:                      _check_sum,
-            subsystem:                      _subsystem,
-            dll_characteristics:            _dll_characteristics,
-            size_of_stack_reserve:          _size_of_stack_reserve,
-            size_of_stack_commit:           _size_of_stack_commit,
-            size_of_heap_reserve:           _size_of_heap_reserve,
-            size_of_heap_commit:            _size_of_heap_commit,
-            loader_flags:                   _loader_flags,
-            number_of_rva_and_sizes:        _number_of_rva_and_sizes,
-            data_directory:                 _data_directory,
-        })
+        _magic: parse_optional_header_magic
+            >> _major_linker_version: le_u8
+            >> _minor_linker_version: le_u8
+            >> _size_of_code: le_u32
+            >> _size_of_initialized_data: le_u32
+            >> _size_of_uninitialized_data: le_u32
+            >> _address_of_entry_point: le_u32
+            >> _base_of_code: le_u32
+            >> _base_of_data: le_u32
+            >> _image_base: le_u32
+            >> _section_alignment: le_u32
+            >> _file_alignment: le_u32
+            >> _major_operating_system_version: le_u16
+            >> _minor_operating_system_version: le_u16
+            >> _major_image_version: le_u16
+            >> _minor_image_version: le_u16
+            >> _major_subsystem_version: le_u16
+            >> _minor_subsystem_version: le_u16
+            >> _win32_version_value: le_u32
+            >> _size_of_image: le_u32
+            >> _size_of_headers: le_u32
+            >> _check_sum: le_u32
+            >> _subsystem: parse_subsystem
+            >> _dll_characteristics: parse_dll_characteristics
+            >> _size_of_stack_reserve: le_u32
+            >> _size_of_stack_commit: le_u32
+            >> _size_of_heap_reserve: le_u32
+            >> _size_of_heap_commit: le_u32
+            >> _loader_flags: le_u32
+            >> _number_of_rva_and_sizes: verify!(le_u32, |x| x == 16u32)
+            >> _data_directory: count_fixed!(DataDirectory, parse_data_directory, 16)
+            >> (OptionalHeader32 {
+                magic: _magic,
+                major_linker_version: _major_linker_version,
+                minor_linker_version: _minor_linker_version,
+                size_of_code: _size_of_code,
+                size_of_initialized_data: _size_of_initialized_data,
+                size_of_uninitialized_data: _size_of_uninitialized_data,
+                address_of_entry_point: _address_of_entry_point,
+                base_of_code: _base_of_code,
+                base_of_data: _base_of_data,
+                image_base: _image_base,
+                section_alignment: _section_alignment,
+                file_alignment: _file_alignment,
+                major_operating_system_version: _major_operating_system_version,
+                minor_operating_system_version: _minor_operating_system_version,
+                major_image_version: _major_image_version,
+                minor_image_version: _minor_image_version,
+                major_subsystem_version: _major_subsystem_version,
+                minor_subsystem_version: _minor_subsystem_version,
+                win32_version_value: _win32_version_value,
+                size_of_image: _size_of_image,
+                size_of_headers: _size_of_headers,
+                check_sum: _check_sum,
+                subsystem: _subsystem,
+                dll_characteristics: _dll_characteristics,
+                size_of_stack_reserve: _size_of_stack_reserve,
+                size_of_stack_commit: _size_of_stack_commit,
+                size_of_heap_reserve: _size_of_heap_reserve,
+                size_of_heap_commit: _size_of_heap_commit,
+                loader_flags: _loader_flags,
+                number_of_rva_and_sizes: _number_of_rva_and_sizes,
+                data_directory: _data_directory,
+            })
     )
 );
 
-named!(parse_optional_header64<OptionalHeader64>,
+named!(
+    parse_optional_header64<OptionalHeader64>,
     do_parse!(
-            _magic:                             parse_optional_header_magic
-        >>  _major_linker_version:              le_u8
-        >>  _minor_linker_version:              le_u8
-        >>  _size_of_code:                      le_u32
-        >>  _size_of_initialized_data:          le_u32
-        >>  _size_of_uninitialized_data:        le_u32
-        >>  _address_of_entry_point:            le_u32
-        >>  _base_of_code:                      le_u32
-        >>  _image_base:                        le_u64
-        >>  _section_alignment:                 le_u32
-        >>  _file_alignment:                    le_u32
-        >>  _major_operating_system_version:    le_u16
-        >>  _minor_operating_system_version:    le_u16
-        >>  _major_image_version:               le_u16
-        >>  _minor_image_version:               le_u16
-        >>  _major_subsystem_version:           le_u16
-        >>  _minor_subsystem_version:           le_u16
-        >>  _win32_version_value:               le_u32
-        >>  _size_of_image:                     le_u32
-        >>  _size_of_headers:                   le_u32
-        >>  _check_sum:                         le_u32
-        >>  _subsystem:                         parse_subsystem
-        >>  _dll_characteristics:               parse_dll_characteristics
-        >>  _size_of_stack_reserve:             le_u64
-        >>  _size_of_stack_commit:              le_u64
-        >>  _size_of_heap_reserve:              le_u64
-        >>  _size_of_heap_commit:               le_u64
-        >>  _loader_flags:                      le_u32
-        >>  _number_of_rva_and_sizes:           verify!(le_u32, |x| x == 16u32)
-        >>  _data_directory:                    count_fixed!(DataDirectory, parse_data_directory, 16)
-        >>  ( OptionalHeader64 {
-            magic:                             _magic,
-            major_linker_version:              _major_linker_version,
-            minor_linker_version:              _minor_linker_version,
-            size_of_code:                      _size_of_code,
-            size_of_initialized_data:          _size_of_initialized_data,
-            size_of_uninitialized_data:        _size_of_uninitialized_data,
-            address_of_entry_point:            _address_of_entry_point,
-            base_of_code:                      _base_of_code,
-            image_base:                        _image_base,
-            section_alignment:                 _section_alignment,
-            file_alignment:                    _file_alignment,
-            major_operating_system_version:    _major_operating_system_version,
-            minor_operating_system_version:    _minor_operating_system_version,
-            major_image_version:               _major_image_version,
-            minor_image_version:               _minor_image_version,
-            major_subsystem_version:           _major_subsystem_version,
-            minor_subsystem_version:           _minor_subsystem_version,
-            win32_version_value:               _win32_version_value,
-            size_of_image:                     _size_of_image,
-            size_of_headers:                   _size_of_headers,
-            check_sum:                         _check_sum,
-            subsystem:                         _subsystem,
-            dll_characteristics:               _dll_characteristics,
-            size_of_stack_reserve:             _size_of_stack_reserve,
-            size_of_stack_commit:              _size_of_stack_commit,
-            size_of_heap_reserve:              _size_of_heap_reserve,
-            size_of_heap_commit:               _size_of_heap_commit,
-            loader_flags:                      _loader_flags,
-            number_of_rva_and_sizes:           _number_of_rva_and_sizes,
-            data_directory:                    _data_directory,
-        })
+        _magic: parse_optional_header_magic
+            >> _major_linker_version: le_u8
+            >> _minor_linker_version: le_u8
+            >> _size_of_code: le_u32
+            >> _size_of_initialized_data: le_u32
+            >> _size_of_uninitialized_data: le_u32
+            >> _address_of_entry_point: le_u32
+            >> _base_of_code: le_u32
+            >> _image_base: le_u64
+            >> _section_alignment: le_u32
+            >> _file_alignment: le_u32
+            >> _major_operating_system_version: le_u16
+            >> _minor_operating_system_version: le_u16
+            >> _major_image_version: le_u16
+            >> _minor_image_version: le_u16
+            >> _major_subsystem_version: le_u16
+            >> _minor_subsystem_version: le_u16
+            >> _win32_version_value: le_u32
+            >> _size_of_image: le_u32
+            >> _size_of_headers: le_u32
+            >> _check_sum: le_u32
+            >> _subsystem: parse_subsystem
+            >> _dll_characteristics: parse_dll_characteristics
+            >> _size_of_stack_reserve: le_u64
+            >> _size_of_stack_commit: le_u64
+            >> _size_of_heap_reserve: le_u64
+            >> _size_of_heap_commit: le_u64
+            >> _loader_flags: le_u32
+            >> _number_of_rva_and_sizes: verify!(le_u32, |x| x == 16u32)
+            >> _data_directory: count_fixed!(DataDirectory, parse_data_directory, 16)
+            >> (OptionalHeader64 {
+                magic: _magic,
+                major_linker_version: _major_linker_version,
+                minor_linker_version: _minor_linker_version,
+                size_of_code: _size_of_code,
+                size_of_initialized_data: _size_of_initialized_data,
+                size_of_uninitialized_data: _size_of_uninitialized_data,
+                address_of_entry_point: _address_of_entry_point,
+                base_of_code: _base_of_code,
+                image_base: _image_base,
+                section_alignment: _section_alignment,
+                file_alignment: _file_alignment,
+                major_operating_system_version: _major_operating_system_version,
+                minor_operating_system_version: _minor_operating_system_version,
+                major_image_version: _major_image_version,
+                minor_image_version: _minor_image_version,
+                major_subsystem_version: _major_subsystem_version,
+                minor_subsystem_version: _minor_subsystem_version,
+                win32_version_value: _win32_version_value,
+                size_of_image: _size_of_image,
+                size_of_headers: _size_of_headers,
+                check_sum: _check_sum,
+                subsystem: _subsystem,
+                dll_characteristics: _dll_characteristics,
+                size_of_stack_reserve: _size_of_stack_reserve,
+                size_of_stack_commit: _size_of_stack_commit,
+                size_of_heap_reserve: _size_of_heap_reserve,
+                size_of_heap_commit: _size_of_heap_commit,
+                loader_flags: _loader_flags,
+                number_of_rva_and_sizes: _number_of_rva_and_sizes,
+                data_directory: _data_directory,
+            })
     )
 );
 
@@ -232,7 +234,7 @@ pub fn parse_optional_header(i: &[u8]) -> IResult<&[u8], OptionalHeader> {
         OptionalHeaderMagic::Header64 => {
             let (rest, oh) = parse_optional_header64(i)?;
             Ok((rest, OptionalHeader::AMD64(oh)))
-        },
+        }
         _ => {
             let (rest, oh) = parse_optional_header32(i)?;
             Ok((rest, OptionalHeader::I386(oh)))
@@ -267,28 +269,31 @@ named!(pub parse_section_header<SectionHeader>,
     )
 );
 
-
 fn parse_pe_magic(i: &[u8]) -> IResult<&[u8], u32> {
     let (r, t) = tag!(i, "PE\0\0")?;
     match le_u32(t) {
         Ok((_, m)) => Ok((r, m)),
-        Err(e) => Err(e)
+        Err(e) => Err(e),
     }
 }
 
 pub fn parse_pe_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], PeHeader<'a>> {
     do_parse!(
         i,
-            _signature:         parse_pe_magic
-        >>  _file_header:       parse_file_header
-        >>  _optional_header:   parse_optional_header
-        >>  _sections:          count!(parse_section_header, _file_header.number_of_sections as usize)
-        >>  ( PeHeader {
-            data:               i,
-            signature:          _signature,
-            file_header:        _file_header,
-            optional_header:    _optional_header,
-            sections:           _sections
-        })
+        _signature: parse_pe_magic
+            >> _file_header: parse_file_header
+            >> _optional_header: parse_optional_header
+            >> _sections:
+                count!(
+                    parse_section_header,
+                    _file_header.number_of_sections as usize
+                )
+            >> (PeHeader {
+                data: i,
+                signature: _signature,
+                file_header: _file_header,
+                optional_header: _optional_header,
+                sections: _sections
+            })
     )
 }

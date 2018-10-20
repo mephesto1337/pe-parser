@@ -3,53 +3,47 @@ use nom;
 
 #[allow(unused_macros)]
 macro_rules! parse_u8_enum {
-    ($funcname:ident, $enum:ident) => (
+    ($funcname:ident, $enum:ident) => {
         pub fn $funcname(i: &[u8]) -> nom::IResult<&[u8], $enum> {
             match le_u8(i) {
-                Ok((rest, x)) => {
-                    match $enum::from_u8(x) {
-                        Some(y) => Ok((rest, y)),
-                        None    => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::NoneOf)))
-                    }
+                Ok((rest, x)) => match $enum::from_u8(x) {
+                    Some(y) => Ok((rest, y)),
+                    None => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::NoneOf))),
                 },
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             }
         }
-    )
+    };
 }
 
 #[allow(unused_macros)]
 macro_rules! parse_u16_enum {
-    ($funcname:ident, $enum:ident) => (
+    ($funcname:ident, $enum:ident) => {
         pub fn $funcname(i: &[u8]) -> nom::IResult<&[u8], $enum> {
             match nom::le_u16(i) {
-                Ok((rest, x)) => {
-                    match $enum::from_u16(x) {
-                        Some(y) => Ok((rest, y)),
-                        None    => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::NoneOf)))
-                    }
+                Ok((rest, x)) => match $enum::from_u16(x) {
+                    Some(y) => Ok((rest, y)),
+                    None => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::NoneOf))),
                 },
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             }
         }
-    )
+    };
 }
 
 #[allow(unused_macros)]
 macro_rules! parse_u32_enum {
-    ($funcname:ident, $enum:ident) => (
+    ($funcname:ident, $enum:ident) => {
         pub fn $funcname(i: &[u8]) -> nom::IResult<&[u8], $enum> {
             match nom::le_u32(i) {
-                Ok((rest, x)) => {
-                    match $enum::from_u32(x) {
-                        Some(y) => Ok((rest, y)),
-                        None    => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::NoneOf)))
-                    }
+                Ok((rest, x)) => match $enum::from_u32(x) {
+                    Some(y) => Ok((rest, y)),
+                    None => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::NoneOf))),
                 },
-                Err(e) => Err(e)
+                Err(e) => Err(e),
             }
         }
-    )
+    };
 }
 
 enum_from_primitive! {

@@ -1,14 +1,16 @@
-#![recursion_limit="128"]
+#![recursion_limit = "128"]
 
-#[macro_use] extern crate nom;
-#[macro_use] extern crate enum_primitive;
-#[macro_use] extern crate exe;
+#[macro_use]
+extern crate nom;
+#[macro_use]
+extern crate enum_primitive;
+#[macro_use]
+extern crate exe;
 extern crate libc;
 
 #[allow(dead_code)]
 #[allow(unused_macros)]
-
-use libc::{size_t, uint8_t, c_void};
+use libc::{c_void, size_t, uint8_t};
 
 pub mod enums;
 pub use enums::*;
@@ -62,12 +64,12 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
     fn get_section_name_at(&self, idx: usize) -> Option<&str> {
         match self.sections.iter().nth(idx) {
             Some(s) => Some(s.name),
-            None => None
+            None => None,
         }
     }
 
     fn get_data(&self, start: usize, len: usize) -> &[u8] {
-        &self.data[start .. (start + len)]
+        &self.data[start..(start + len)]
     }
 
     fn get_info(&self) -> exe::Info {
@@ -75,38 +77,38 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
             os: String::from("windows"),
             arch: String::from(match &self.file_header.machine {
                 FileMachine::MachineIA64 => "ia",
-                _ => "x86"
+                _ => "x86",
             }),
             bits: match &self.file_header.machine {
                 FileMachine::MachineI386 => 32usize,
-                _ => 64usize
-            }
+                _ => 64usize,
+            },
         }
     }
 
     fn parse(i: &'a [u8]) -> Option<Self> {
         match parse_pe_header(i) {
             Ok((_, pe)) => Some(pe),
-            Err(_) => None
+            Err(_) => None,
         }
     }
 }
 
 #[no_mangle]
-pub extern fn rs_pe_parse_dos<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
+pub extern "C" fn rs_pe_parse_dos<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
     let buf = unsafe { ::std::slice::from_raw_parts(i as *const u8, len) };
 
     match parse_dos_header(buf) {
         Ok((_, dos)) => Box::into_raw(Box::new(dos)) as *const c_void,
         Err(e) => {
             eprintln!("{:?}", e.into_error_kind());
-            ::std::ptr::null::<c_void>()   
+            ::std::ptr::null::<c_void>()
         }
     }
 }
 
 #[no_mangle]
-pub extern fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
+pub extern "C" fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
     let buf = unsafe { ::std::slice::from_raw_parts(i as *const u8, len) };
 
     match parse_dos_header(buf) {
@@ -114,14 +116,15 @@ pub extern fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
             let off = dos.e_lfanew as usize;
             match parse_pe_header(&buf[off..]) {
                 Ok((_, pe)) => Box::into_raw(Box::new(pe)) as *const c_void,
-                Err(_) => ::std::ptr::null::<c_void>()
+                Err(_) => ::std::ptr::null::<c_void>(),
             }
-        },
-        Err(_) => ::std::ptr::null::<c_void>()
+        }
+        Err(_) => ::std::ptr::null::<c_void>(),
     }
 }
 
-generate_c_api!(PeHeader<'a>,
+generate_c_api!(
+    PeHeader<'a>,
     rs_pe_get_info,
     rs_pe_get_number_of_sections,
     rs_pe_get_section_at,

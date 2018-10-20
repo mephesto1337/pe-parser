@@ -1,6 +1,7 @@
 extern crate clap;
 extern crate pe;
-#[macro_use] extern crate failure;
+#[macro_use]
+extern crate failure;
 extern crate nom;
 
 use clap::{App, Arg};
@@ -37,9 +38,7 @@ fn run() -> Result<(), Error> {
     let args = App::new("dumppe")
         .version("1.0")
         .author("Thomas WACHE")
-        .arg(
-            Arg::with_name("pe").index(1)
-        )
+        .arg(Arg::with_name("pe").index(1))
         .get_matches_safe()?;
     if let Some(pefilename) = args.value_of("pe") {
         let mut buf: Vec<u8> = Vec::new();
@@ -56,24 +55,24 @@ fn run() -> Result<(), Error> {
                     Ok((_, ph)) => {
                         println!("PE = {:#?}", ph);
                         Ok(())
-                    },
-                    Err(e) => Err(Error::ParseError(e.into_error_kind()))
+                    }
+                    Err(e) => Err(Error::ParseError(e.into_error_kind())),
                 }
-            },
-            Err(e) => Err(Error::ParseError(e.into_error_kind()))
+            }
+            Err(e) => Err(Error::ParseError(e.into_error_kind())),
         }
     } else {
         Err(Error::ArgsError(clap::Error {
-            message:    String::from("pe argument must be privided"),
-            kind:       clap::ErrorKind::EmptyValue,
-            info:       None
+            message: String::from("pe argument must be privided"),
+            kind: clap::ErrorKind::EmptyValue,
+            info: None,
         }))
     }
 }
 
 fn main() {
     match run() {
-        Ok(()) => {},
-        Err(e) => println!("{}", e)
+        Ok(()) => {}
+        Err(e) => println!("{}", e),
     }
 }
