@@ -70,6 +70,20 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
         &self.data[start .. (start + len)]
     }
 
+    fn get_info(&self) -> exe::Info {
+        exe::Info {
+            os: String::from("windows"),
+            arch: String::from(match &self.file_header.machine {
+                FileMachine::MachineIA64 => "ia",
+                _ => "x86"
+            }),
+            bits: match &self.file_header.machine {
+                FileMachine::MachineI386 => 32usize,
+                _ => 64usize
+            }
+        }
+    }
+
     fn parse(i: &'a [u8]) -> Option<Self> {
         match parse_pe_header(i) {
             Ok((_, pe)) => Some(pe),
@@ -107,13 +121,11 @@ pub extern fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_void {
     }
 }
 
-generate_c_api!(SectionHeader<'a>, PeHeader<'a>,
-    rs_pe_get_flags,
-    rs_pe_get_offset,
-    rs_pe_get_size,
+generate_c_api!(PeHeader<'a>,
+    rs_pe_get_info,
     rs_pe_get_number_of_sections,
     rs_pe_get_section_at,
-    rs_pe_get_section_name_at,
     rs_pe_get_data,
+    rs_pe_free_section,
     rs_pe_free_exe
 );
