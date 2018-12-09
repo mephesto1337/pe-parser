@@ -8,7 +8,6 @@ extern crate enum_primitive;
 extern crate exe;
 extern crate libc;
 
-#[allow(dead_code)]
 #[allow(unused_macros)]
 use libc::{c_void, size_t, uint8_t};
 
@@ -126,6 +125,7 @@ pub extern "C" fn rs_pe_parse<'a>(i: *const uint8_t, len: size_t) -> *const c_vo
 generate_c_api!(
     PeHeader<'a>,
     rs_pe_get_info,
+    rs_pe_free_info,
     rs_pe_get_number_of_sections,
     rs_pe_get_section_at,
     rs_pe_get_data,
