@@ -122,7 +122,7 @@ named!(
             >> _size_of_heap_commit: le_u32
             >> _loader_flags: le_u32
             >> _number_of_rva_and_sizes: verify!(le_u32, |x| x == 16u32)
-            >> _data_directory: count_fixed!(DataDirectory, parse_data_directory, 16)
+            >> _data_directory: count!(parse_data_directory, 16)
             >> (OptionalHeader32 {
                 magic: _magic,
                 major_linker_version: _major_linker_version,
@@ -191,7 +191,7 @@ named!(
             >> _size_of_heap_commit: le_u64
             >> _loader_flags: le_u32
             >> _number_of_rva_and_sizes: verify!(le_u32, |x| x == 16u32)
-            >> _data_directory: count_fixed!(DataDirectory, parse_data_directory, 16)
+            >> _data_directory: count!(parse_data_directory, 16)
             >> (OptionalHeader64 {
                 magic: _magic,
                 major_linker_version: _major_linker_version,

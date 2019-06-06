@@ -34,7 +34,7 @@ pub struct FileHeader {
     pub characteristics: u16,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct DataDirectory {
     pub virtual_address: u32,
     pub size: u32,
@@ -72,7 +72,7 @@ pub struct OptionalHeader32 {
     pub size_of_heap_commit: u32,
     pub loader_flags: u32,
     pub number_of_rva_and_sizes: u32,
-    pub data_directory: [DataDirectory; 16],
+    pub data_directory: Vec<DataDirectory>,
 }
 
 #[derive(Debug)]
@@ -106,7 +106,7 @@ pub struct OptionalHeader64 {
     pub size_of_heap_commit: u64,
     pub loader_flags: u32,
     pub number_of_rva_and_sizes: u32,
-    pub data_directory: [DataDirectory; 16],
+    pub data_directory: Vec<DataDirectory>,
 }
 
 #[derive(Debug)]
