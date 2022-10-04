@@ -1,4 +1,6 @@
-use enums::*;
+use crate::enums::{
+    DllCharacteristics, FileMachine, OptionalHeaderMagic, SectionCharacteristics, SubSystem,
+};
 
 #[derive(Debug)]
 pub struct DosHeader {
@@ -65,14 +67,19 @@ pub struct OptionalHeader32 {
     pub size_of_headers: u32,
     pub check_sum: u32,
     pub subsystem: SubSystem,
-    pub dll_characteristics: Vec<DllCharacteristic>,
+    pub dll_characteristics: DllCharacteristics,
     pub size_of_stack_reserve: u32,
     pub size_of_stack_commit: u32,
     pub size_of_heap_reserve: u32,
     pub size_of_heap_commit: u32,
     pub loader_flags: u32,
-    pub number_of_rva_and_sizes: u32,
     pub data_directory: Vec<DataDirectory>,
+}
+
+impl OptionalHeader32 {
+    pub const fn size() -> usize {
+        224
+    }
 }
 
 #[derive(Debug)]
@@ -99,14 +106,19 @@ pub struct OptionalHeader64 {
     pub size_of_headers: u32,
     pub check_sum: u32,
     pub subsystem: SubSystem,
-    pub dll_characteristics: Vec<DllCharacteristic>,
+    pub dll_characteristics: DllCharacteristics,
     pub size_of_stack_reserve: u64,
     pub size_of_stack_commit: u64,
     pub size_of_heap_reserve: u64,
     pub size_of_heap_commit: u64,
     pub loader_flags: u32,
-    pub number_of_rva_and_sizes: u32,
     pub data_directory: Vec<DataDirectory>,
+}
+
+impl OptionalHeader64 {
+    pub const fn size() -> usize {
+        240
+    }
 }
 
 #[derive(Debug)]
@@ -115,9 +127,31 @@ pub enum OptionalHeader {
     AMD64(OptionalHeader64),
 }
 
+impl OptionalHeader {
+    pub const fn size(&self) -> usize {
+        match self {
+            Self::I386(_) => OptionalHeader32::size(),
+            Self::AMD64(_) => OptionalHeader32::size(),
+        }
+    }
+
+    pub fn size_of_image(&self) -> usize {
+        match self {
+            Self::I386(ref i386) => i386.size_of_image as usize,
+            Self::AMD64(ref amd64) => amd64.size_of_image as usize,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum SectionName<'a> {
+    Short(&'a str),
+    Offset(usize),
+}
+
 #[derive(Debug)]
 pub struct SectionHeader<'a> {
-    pub name: &'a str,
+    pub name: SectionName<'a>,
     pub physical_address: u32,
     pub virtual_address: u32,
     pub size_of_raw_data: u32,
@@ -126,7 +160,7 @@ pub struct SectionHeader<'a> {
     pub pointer_to_linenumbers: u32,
     pub number_of_relocations: u16,
     pub number_of_linenumbers: u16,
-    pub characteristics: u32,
+    pub characteristics: SectionCharacteristics,
 }
 
 #[derive(Debug)]
