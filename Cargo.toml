@@ -11,10 +11,10 @@ crate-type = ["staticlib", "dylib", "rlib"]
 [dependencies]
 enum-primitive-derive = "0.2"
 num-traits = "0.2"
-thiserror = "1"
 libc = "0.2"
 exe = { path = "../exe", version = "0.2" }
 nom = "7"
 
 [dev-dependencies]
 clap = "3"
+thiserror = "1"

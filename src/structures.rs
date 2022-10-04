@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::enums::{
     DllCharacteristics, FileMachine, OptionalHeaderMagic, SectionCharacteristics, SubSystem,
 };
@@ -131,7 +133,7 @@ impl OptionalHeader {
     pub const fn size(&self) -> usize {
         match self {
             Self::I386(_) => OptionalHeader32::size(),
-            Self::AMD64(_) => OptionalHeader32::size(),
+            Self::AMD64(_) => OptionalHeader64::size(),
         }
     }
 
@@ -163,11 +165,21 @@ pub struct SectionHeader<'a> {
     pub characteristics: SectionCharacteristics,
 }
 
-#[derive(Debug)]
 pub struct PeHeader<'a> {
     pub data: &'a [u8],
     pub signature: u32,
     pub file_header: FileHeader,
     pub optional_header: OptionalHeader,
     pub sections: Vec<SectionHeader<'a>>,
+}
+
+impl<'a> fmt::Debug for PeHeader<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PeHeader")
+            .field("signature", &self.signature)
+            .field("file_header", &self.file_header)
+            .field("optional_header", &self.optional_header)
+            .field("sections", &self.sections)
+            .finish()
+    }
 }

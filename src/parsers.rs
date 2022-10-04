@@ -3,7 +3,7 @@ use nom::bytes::complete::{take, take_until1};
 use nom::combinator::{map, map_opt, map_parser, verify};
 use nom::error::context;
 use nom::multi::{count, length_count};
-use nom::number::complete::{le_u16, le_u32, le_u64, le_u8};
+use nom::number::complete::{be_u16, be_u32, le_u16, le_u32, le_u64, le_u8};
 use nom::sequence::tuple;
 
 use crate::enums::{
@@ -69,8 +69,7 @@ impl<'a> Parse<'a> for DosHeader {
         ) = context(
             "Image DOS header",
             tuple((
-                // TODO: verfify magic
-                verify(le_u16, |magic: &u16| &magic.to_be_bytes() == b"MZ"),
+                verify(be_u16, |magic: &u16| &magic.to_be_bytes() == b"MZ"),
                 le_u16,
                 le_u16,
                 le_u16,
@@ -530,15 +529,26 @@ impl<'a> Parse<'a> for PeHeader<'a> {
         let (rest, (signature, file_header, optional_header)) = context(
             "PE header",
             tuple((
-                verify(le_u32, |magic| &magic.to_be_bytes() == b"PE\0\0"),
+                verify(be_u32, |magic| {
+                    eprintln!("    magic = {:x?}", magic.to_be_bytes());
+                    eprintln!("ref_magic = {:x?}", b"PE\0\0");
+                    &magic.to_be_bytes() == b"PE\0\0"
+                }),
                 FileHeader::parse,
                 OptionalHeader::parse,
             )),
         )(input)?;
+        eprintln!("OptionalHeader.size() = {:x}", optional_header.size());
+        eprintln!(
+            "file_header.size_of_optional_header = {:x}",
+            file_header.size_of_optional_header
+        );
         if optional_header.size() != file_header.size_of_optional_header as usize {
-            return Err(nom::Err::Failure(E::from_error_kind(
+            let e = E::from_error_kind(input, nom::error::ErrorKind::Verify);
+            return Err(nom::Err::Failure(E::add_context(
                 input,
-                nom::error::ErrorKind::Verify,
+                "Optional header does not match",
+                e,
             )));
         }
         let (_, sections) = context(
@@ -548,6 +558,11 @@ impl<'a> Parse<'a> for PeHeader<'a> {
                 file_header.number_of_sections as usize,
             ),
         )(rest)?;
+        eprintln!(
+            "Will take {} bytes out of {}",
+            optional_header.size_of_image(),
+            input.len()
+        );
         let (rest, data) = context("PE header/data", take(optional_header.size_of_image()))(input)?;
 
         Ok((
