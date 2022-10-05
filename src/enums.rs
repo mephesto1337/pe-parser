@@ -668,6 +668,77 @@ pub struct SectionCharacteristics {
     pub memory_write: bool,
 }
 
+#[repr(usize)]
+#[derive(Debug, Primitive)]
+pub enum ImageDataDirectoryIndex {
+    /// Export directory
+    EntryExport = 0,
+
+    /// Import directory
+    EntryImport = 1,
+
+    /// Resource directory
+    EntryResource = 2,
+
+    /// Exception directory
+    EntryException = 3,
+
+    /// Security directory
+    EntrySecurity = 4,
+
+    /// Base relocation table
+    EntryBasereloc = 5,
+
+    /// Debug directory
+    EntryDebug = 6,
+
+    /// Architecture-specific data
+    EntryArchitecture = 7,
+
+    /// The relative virtual address of global pointer
+    EntryGlobalptr = 8,
+
+    /// Thread local storage directory
+    EntryTls = 9,
+
+    /// Load configuration directory
+    EntryLoadConfig = 10,
+
+    /// Bound import directory
+    EntryBoundImport = 11,
+
+    /// Import address table
+    EntryIat = 12,
+
+    /// Delay import table
+    EntryDelayImport = 13,
+
+    /// COM descriptor table
+    EntryComDescriptor = 14,
+}
+
+impl fmt::Display for ImageDataDirectoryIndex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EntryExport => f.write_str("Export"),
+            Self::EntryImport => f.write_str("Import"),
+            Self::EntryResource => f.write_str("Resource"),
+            Self::EntryException => f.write_str("Exception"),
+            Self::EntrySecurity => f.write_str("Security"),
+            Self::EntryBasereloc => f.write_str("Basereloc"),
+            Self::EntryDebug => f.write_str("Debug"),
+            Self::EntryArchitecture => f.write_str("Architecture"),
+            Self::EntryGlobalptr => f.write_str("Globalptr"),
+            Self::EntryTls => f.write_str("Tls"),
+            Self::EntryLoadConfig => f.write_str("Load Config"),
+            Self::EntryBoundImport => f.write_str("Bound Import"),
+            Self::EntryIat => f.write_str("IAT"),
+            Self::EntryDelayImport => f.write_str("Delay Import"),
+            Self::EntryComDescriptor => f.write_str("ComDescriptor"),
+        }
+    }
+}
+
 impl fmt::Debug for SectionCharacteristics {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut dbg_struct = f.debug_struct("SectionCharacteristics");

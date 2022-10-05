@@ -1,8 +1,10 @@
 use std::fmt;
 
+use num_traits::FromPrimitive;
+
 use crate::enums::{
-    DllCharacteristics, FileCharacteristics, FileMachine, OptionalHeaderMagic,
-    SectionCharacteristics, SubSystem,
+    DllCharacteristics, FileCharacteristics, FileMachine, ImageDataDirectoryIndex,
+    OptionalHeaderMagic, SectionCharacteristics, SubSystem,
 };
 
 #[derive(Debug)]
@@ -32,7 +34,7 @@ impl fmt::Display for DosHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
         write!(f, "{offset}magic: 0x{:04x}\n", self.e_magic)?;
-        write!(f, "{offset}lfanew: 0x:{:x}\n", self.e_lfanew)
+        write!(f, "{offset}lfanew: 0x{:x}\n", self.e_lfanew)
     }
 }
 
@@ -53,10 +55,24 @@ impl fmt::Display for FileHeader {
         write!(f, "{offset}machine: {}\n", self.machine)?;
         write!(
             f,
-            "{offset}number_of_sections: {}\n",
+            "{offset}number_of_sections: 0x{:x}\n",
             self.number_of_sections
         )?;
-        write!(f, "{offset}number_of_symbols: {}\n", self.number_of_symbols)?;
+        let time = chrono::DateTime::<chrono::Utc>::from_utc(
+            chrono::NaiveDateTime::from_timestamp(self.time_date_stamp as i64, 0),
+            chrono::Utc,
+        );
+        write!(f, "{offset}time_date_stamp: {:?}\n", time)?;
+        write!(
+            f,
+            "{offset}number_of_symbols: 0x{:x}\n",
+            self.number_of_symbols
+        )?;
+        write!(
+            f,
+            "{offset}size_of_optional_header: 0x{:x}\n",
+            self.size_of_optional_header
+        )?;
         write!(f, "{offset}characteristics: {}\n", self.characteristics)
     }
 }
@@ -70,11 +86,7 @@ pub struct DataDirectory {
 impl fmt::Display for DataDirectory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
-        write!(
-            f,
-            "{offset}virtual_address: 0x{:04x}\n",
-            self.virtual_address
-        )?;
+        write!(f, "{offset}virtual_address: 0x{:x}\n", self.virtual_address)?;
         write!(f, "{offset}size: 0x{:x}\n", self.size)
     }
 }
@@ -126,73 +138,77 @@ impl fmt::Display for OptionalHeader32 {
         write!(f, "{offset}magic: {}\n", self.magic)?;
         write!(
             f,
-            "{offset}major_linker_version: {}\n",
+            "{offset}major_linker_version: 0x{:x}\n",
             self.major_linker_version
         )?;
         write!(
             f,
-            "{offset}minor_linker_version: {}\n",
+            "{offset}minor_linker_version: 0x{:x}\n",
             self.minor_linker_version
         )?;
-        write!(f, "{offset}size_of_code: {}\n", self.size_of_code)?;
+        write!(f, "{offset}size_of_code: 0x{:x}\n", self.size_of_code)?;
         write!(
             f,
-            "{offset}size_of_initialized_data: {}\n",
+            "{offset}size_of_initialized_data: 0x{:x}\n",
             self.size_of_initialized_data
         )?;
         write!(
             f,
-            "{offset}size_of_uninitialized_data: {}\n",
+            "{offset}size_of_uninitialized_data: 0x{:x}\n",
             self.size_of_uninitialized_data
         )?;
         write!(
             f,
-            "{offset}address_of_entry_point: {}\n",
+            "{offset}address_of_entry_point: 0x{:x}\n",
             self.address_of_entry_point
         )?;
-        write!(f, "{offset}base_of_code: {}\n", self.base_of_code)?;
-        write!(f, "{offset}base_of_data: {}\n", self.base_of_data)?;
-        write!(f, "{offset}image_base: {}\n", self.image_base)?;
-        write!(f, "{offset}section_alignment: {}\n", self.section_alignment)?;
-        write!(f, "{offset}file_alignment: {}\n", self.file_alignment)?;
+        write!(f, "{offset}base_of_code: 0x{:x}\n", self.base_of_code)?;
+        write!(f, "{offset}base_of_data: 0x{:x}\n", self.base_of_data)?;
+        write!(f, "{offset}image_base: 0x{:x}\n", self.image_base)?;
         write!(
             f,
-            "{offset}major_operating_system_version: {}\n",
+            "{offset}section_alignment: 0x{:x}\n",
+            self.section_alignment
+        )?;
+        write!(f, "{offset}file_alignment: 0x{:x}\n", self.file_alignment)?;
+        write!(
+            f,
+            "{offset}major_operating_system_version: 0x{:x}\n",
             self.major_operating_system_version
         )?;
         write!(
             f,
-            "{offset}minor_operating_system_version: {}\n",
+            "{offset}minor_operating_system_version: 0x{:x}\n",
             self.minor_operating_system_version
         )?;
         write!(
             f,
-            "{offset}major_image_version: {}\n",
+            "{offset}major_image_version: 0x{:x}\n",
             self.major_image_version
         )?;
         write!(
             f,
-            "{offset}minor_image_version: {}\n",
+            "{offset}minor_image_version: 0x{:x}\n",
             self.minor_image_version
         )?;
         write!(
             f,
-            "{offset}major_subsystem_version: {}\n",
+            "{offset}major_subsystem_version: 0x{:x}\n",
             self.major_subsystem_version
         )?;
         write!(
             f,
-            "{offset}minor_subsystem_version: {}\n",
+            "{offset}minor_subsystem_version: 0x{:x}\n",
             self.minor_subsystem_version
         )?;
         write!(
             f,
-            "{offset}win32_version_value: {}\n",
+            "{offset}win32_version_value: 0x{:x}\n",
             self.win32_version_value
         )?;
-        write!(f, "{offset}size_of_image: {}\n", self.size_of_image)?;
-        write!(f, "{offset}size_of_headers: {}\n", self.size_of_headers)?;
-        write!(f, "{offset}check_sum: {}\n", self.check_sum)?;
+        write!(f, "{offset}size_of_image: 0x{:x}\n", self.size_of_image)?;
+        write!(f, "{offset}size_of_headers: 0x{:x}\n", self.size_of_headers)?;
+        write!(f, "{offset}check_sum: 0x{:x}\n", self.check_sum)?;
         write!(f, "{offset}subsystem: {}\n", self.subsystem)?;
         write!(
             f,
@@ -201,25 +217,25 @@ impl fmt::Display for OptionalHeader32 {
         )?;
         write!(
             f,
-            "{offset}size_of_stack_reserve: {}\n",
+            "{offset}size_of_stack_reserve: 0x{:x}\n",
             self.size_of_stack_reserve
         )?;
         write!(
             f,
-            "{offset}size_of_stack_commit: {}\n",
+            "{offset}size_of_stack_commit: 0x{:x}\n",
             self.size_of_stack_commit
         )?;
         write!(
             f,
-            "{offset}size_of_heap_reserve: {}\n",
+            "{offset}size_of_heap_reserve: 0x{:x}\n",
             self.size_of_heap_reserve
         )?;
         write!(
             f,
-            "{offset}size_of_heap_commit: {}\n",
+            "{offset}size_of_heap_commit: 0x{:x}\n",
             self.size_of_heap_commit
         )?;
-        write!(f, "{offset}loader_flags: {}\n", self.loader_flags)?;
+        write!(f, "{offset}loader_flags: 0x{:x}\n", self.loader_flags)?;
         write!(f, "{offset}data_directory:\n")?;
         for dd in &self.data_directory[..] {
             write!(f, "{:width$}\n", dd)?;
@@ -272,74 +288,79 @@ impl fmt::Display for OptionalHeader64 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let width = f.width().unwrap_or_default() + 1;
         let offset = "  ".repeat(width);
+        write!(f, "{offset}magic: {}\n", self.magic)?;
         write!(
             f,
-            "{offset}major_linker_version: {}\n",
+            "{offset}major_linker_version: 0x{:x}\n",
             self.major_linker_version
         )?;
         write!(
             f,
-            "{offset}minor_linker_version: {}\n",
+            "{offset}minor_linker_version: 0x{:x}\n",
             self.minor_linker_version
         )?;
-        write!(f, "{offset}size_of_code: {}\n", self.size_of_code)?;
+        write!(f, "{offset}size_of_code: 0x{:x}\n", self.size_of_code)?;
         write!(
             f,
-            "{offset}size_of_initialized_data: {}\n",
+            "{offset}size_of_initialized_data: 0x{:x}\n",
             self.size_of_initialized_data
         )?;
         write!(
             f,
-            "{offset}size_of_uninitialized_data: {}\n",
+            "{offset}size_of_uninitialized_data: 0x{:x}\n",
             self.size_of_uninitialized_data
         )?;
         write!(
             f,
-            "{offset}address_of_entry_point: {}\n",
+            "{offset}address_of_entry_point: 0x{:x}\n",
             self.address_of_entry_point
         )?;
-        write!(f, "{offset}base_of_code: {}\n", self.base_of_code)?;
-        write!(f, "{offset}image_base: {}\n", self.image_base)?;
-        write!(f, "{offset}section_alignment: {}\n", self.section_alignment)?;
-        write!(f, "{offset}file_alignment: {}\n", self.file_alignment)?;
+        write!(f, "{offset}base_of_code: 0x{:x}\n", self.base_of_code)?;
+        write!(f, "{offset}image_base: 0x{:x}\n", self.image_base)?;
         write!(
             f,
-            "{offset}major_operating_system_version: {}\n",
+            "{offset}section_alignment: 0x{:x}\n",
+            self.section_alignment
+        )?;
+        write!(f, "{offset}file_alignment: 0x{:x}\n", self.file_alignment)?;
+        write!(
+            f,
+            "{offset}major_operating_system_version: 0x{:x}\n",
             self.major_operating_system_version
         )?;
         write!(
             f,
-            "{offset}minor_operating_system_version: {}\n",
+            "{offset}minor_operating_system_version: 0x{:x}\n",
             self.minor_operating_system_version
         )?;
         write!(
             f,
-            "{offset}major_image_version: {}\n",
+            "{offset}major_image_version: 0x{:x}\n",
             self.major_image_version
         )?;
         write!(
             f,
-            "{offset}minor_image_version: {}\n",
+            "{offset}minor_image_version: 0x{:x}\n",
             self.minor_image_version
         )?;
         write!(
             f,
-            "{offset}major_subsystem_version: {}\n",
+            "{offset}major_subsystem_version: 0x{:x}\n",
             self.major_subsystem_version
         )?;
         write!(
             f,
-            "{offset}minor_subsystem_version: {}\n",
+            "{offset}minor_subsystem_version: 0x{:x}\n",
             self.minor_subsystem_version
         )?;
         write!(
             f,
-            "{offset}win32_version_value: {}\n",
+            "{offset}win32_version_value: 0x{:x}\n",
             self.win32_version_value
         )?;
-        write!(f, "{offset}size_of_image: {}\n", self.size_of_image)?;
-        write!(f, "{offset}size_of_headers: {}\n", self.size_of_headers)?;
-        write!(f, "{offset}check_sum: {}\n", self.check_sum)?;
+        write!(f, "{offset}size_of_image: 0x{:x}\n", self.size_of_image)?;
+        write!(f, "{offset}size_of_headers: 0x{:x}\n", self.size_of_headers)?;
+        write!(f, "{offset}check_sum: 0x{:x}\n", self.check_sum)?;
         write!(f, "{offset}subsystem: {}\n", self.subsystem)?;
         write!(
             f,
@@ -348,28 +369,33 @@ impl fmt::Display for OptionalHeader64 {
         )?;
         write!(
             f,
-            "{offset}size_of_stack_reserve: {}\n",
+            "{offset}size_of_stack_reserve: 0x{:x}\n",
             self.size_of_stack_reserve
         )?;
         write!(
             f,
-            "{offset}size_of_stack_commit: {}\n",
+            "{offset}size_of_stack_commit: 0x{:x}\n",
             self.size_of_stack_commit
         )?;
         write!(
             f,
-            "{offset}size_of_heap_reserve: {}\n",
+            "{offset}size_of_heap_reserve: 0x{:x}\n",
             self.size_of_heap_reserve
         )?;
         write!(
             f,
-            "{offset}size_of_heap_commit: {}\n",
+            "{offset}size_of_heap_commit: 0x{:x}\n",
             self.size_of_heap_commit
         )?;
-        write!(f, "{offset}loader_flags: {}\n", self.loader_flags)?;
+        write!(f, "{offset}loader_flags: 0x{:x}\n", self.loader_flags)?;
         write!(f, "{offset}data_directory:\n")?;
-        for dd in &self.data_directory[..] {
-            write!(f, "{:width$}\n", dd)?;
+        let width = width + 1;
+        for (idx, dd) in self.data_directory.iter().enumerate() {
+            if let Some(name) = ImageDataDirectoryIndex::from_usize(idx) {
+                write!(f, "{offset}  {}\n{:width$}\n", name, dd)?;
+            } else {
+                write!(f, "{offset}  0x{:x}\n{:width$}\n", idx, dd)?;
+            }
         }
 
         Ok(())
@@ -440,32 +466,40 @@ impl<'a> fmt::Display for SectionHeader<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
         write!(f, "{offset}name: {}\n", self.name)?;
-        write!(f, "{offset}physical_address: {}\n", self.physical_address)?;
-        write!(f, "{offset}virtual_address: {}\n", self.virtual_address)?;
-        write!(f, "{offset}size_of_raw_data: {}\n", self.size_of_raw_data)?;
         write!(
             f,
-            "{offset}pointer_to_raw_data: {}\n",
+            "{offset}physical_address: 0x{:x}\n",
+            self.physical_address
+        )?;
+        write!(f, "{offset}virtual_address: 0x{:x}\n", self.virtual_address)?;
+        write!(
+            f,
+            "{offset}size_of_raw_data: 0x{:x}\n",
+            self.size_of_raw_data
+        )?;
+        write!(
+            f,
+            "{offset}pointer_to_raw_data: 0x{:x}\n",
             self.pointer_to_raw_data
         )?;
         write!(
             f,
-            "{offset}pointer_to_relocations: {}\n",
+            "{offset}pointer_to_relocations: 0x{:x}\n",
             self.pointer_to_relocations
         )?;
         write!(
             f,
-            "{offset}pointer_to_linenumbers: {}\n",
+            "{offset}pointer_to_linenumbers: 0x{:x}\n",
             self.pointer_to_linenumbers
         )?;
         write!(
             f,
-            "{offset}number_of_relocations: {}\n",
+            "{offset}number_of_relocations: 0x{:x}\n",
             self.number_of_relocations
         )?;
         write!(
             f,
-            "{offset}number_of_linenumbers: {}\n",
+            "{offset}number_of_linenumbers: 0x{:x}\n",
             self.number_of_linenumbers
         )?;
         write!(f, "{offset}characteristics: {}\n", self.characteristics)?;
@@ -496,7 +530,7 @@ impl<'a> fmt::Display for PeHeader<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let width = f.width().unwrap_or_default() + 1;
         let offset = "  ".repeat(width);
-        write!(f, "{offset}signature: {:08x}\n", self.signature)?;
+        write!(f, "{offset}signature: 0x{:08x}\n", self.signature)?;
         write!(f, "{offset}file_header:\n{:width$}\n", self.file_header)?;
         write!(
             f,

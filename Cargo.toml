@@ -14,6 +14,7 @@ num-traits = "0.2"
 libc = "0.2"
 exe = { path = "../exe", version = "0.2" }
 nom = "7"
+chrono = "0.4"
 
 [dev-dependencies]
 clap = "3"
