@@ -51,8 +51,8 @@ fn main() -> Result<(), Error> {
     println!("Loaded {} bytes from {}", pefilesize, pefilename);
 
     let (_, dh) = DosHeader::parse::<nom::error::VerboseError<&[u8]>>(&buf[..])?;
-    println!("DOS = {:#x?}", &dh);
+    println!("DOS:\n{}", &dh);
     let (_, pe) = PeHeader::parse::<nom::error::VerboseError<&[u8]>>(&buf[dh.e_lfanew as usize..])?;
-    println!("PE = {:#x?}", &pe);
+    println!("PE:\n{}", &pe);
     Ok(())
 }
