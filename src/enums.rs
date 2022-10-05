@@ -6,7 +6,7 @@ use enum_primitive_derive::Primitive;
 use nom::{
     combinator::map_opt,
     error::context,
-    number::complete::{be_u16, be_u32, le_u16},
+    number::complete::{be_u32, le_u16},
 };
 use num_traits::FromPrimitive;
 
@@ -18,12 +18,337 @@ pub enum FileMachine {
     MachineAMD64 = 0x8664,
 }
 
+impl fmt::Display for FileMachine {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MachineAMD64 => f.write_str("amd64"),
+            Self::MachineIA64 => f.write_str("ia64"),
+            Self::MachineI386 => f.write_str("i386"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Primitive)]
+#[repr(u16)]
+enum FileCharacteristicsRaw {
+    /// Relocation information was stripped from the file. The file must be loaded at its preferred
+    /// base address. If the base address is not available, the loader reports an error.
+    ImageFileRelocsStripped = 0x0001,
+
+    /// The file is executable (there are no unresolved external references).
+    ImageFileExecutableImage = 0x0002,
+
+    /// COFF line numbers were stripped from the file.
+    ImageFileLineNumsStripped = 0x0004,
+
+    /// COFF symbol table entries were stripped from file.
+    ImageFileLocalSymsStripped = 0x0008,
+
+    /// Aggressively trim the working set. This value is obsolete.
+    ImageFileAggresiveWsTrim = 0x0010,
+
+    /// The application can handle addresses larger than 2 GB.
+    ImageFileLargeAddressAware = 0x0020,
+
+    /// The bytes of the word are reversed. This flag is obsolete.
+    ImageFileBytesReversedLo = 0x0080,
+
+    /// The computer supports 32-bit words.
+    ImageFile32bitMachine = 0x0100,
+
+    /// Debugging information was removed and stored separately in another file.
+    ImageFileDebugStripped = 0x0200,
+
+    /// If the image is on removable media, copy it to and run it from the swap file.
+    ImageFileRemovableRunFromSwap = 0x0400,
+
+    /// If the image is on the network, copy it to and run it from the swap file.
+    ImageFileNetRunFromSwap = 0x0800,
+
+    /// The image is a system file.
+    ImageFileSystem = 0x1000,
+
+    /// The image is a DLL file. While it is an executable file, it cannot be run directly.
+    ImageFileDll = 0x2000,
+
+    /// The file should be run only on a uniprocessor computer.
+    ImageFileUpSystemOnly = 0x4000,
+
+    /// The bytes of the word are reversed. This flag is obsolete.
+    ImageFileBytesReversedHi = 0x8000,
+}
+
+/// The characteristics of the image. This member can be one or more of the following values.
+pub struct FileCharacteristics {
+    /// Relocation information was stripped from the file. The file must be loaded at its preferred
+    /// base address. If the base address is not available, the loader reports an error.
+    pub image_file_relocs_stripped: bool,
+
+    /// The file is executable (there are no unresolved external references).
+    pub image_file_executable_image: bool,
+
+    /// COFF line numbers were stripped from the file.
+    pub image_file_line_nums_stripped: bool,
+
+    /// COFF symbol table entries were stripped from file.
+    pub image_file_local_syms_stripped: bool,
+
+    /// Aggressively trim the working set. This value is obsolete.
+    pub image_file_aggresive_ws_trim: bool,
+
+    /// The application can handle addresses larger than 2 GB.
+    pub image_file_large_address_aware: bool,
+
+    /// The bytes of the word are reversed. This flag is obsolete.
+    pub image_file_bytes_reversed_lo: bool,
+
+    /// The computer supports 32-bit words.
+    pub image_file_32_bit_machine: bool,
+
+    /// Debugging information was removed and stored separately in another file.
+    pub image_file_debug_stripped: bool,
+
+    /// If the image is on removable media, copy it to and run it from the swap file.
+    pub image_file_removable_run_from_swap: bool,
+
+    /// If the image is on the network, copy it to and run it from the swap file.
+    pub image_file_net_run_from_swap: bool,
+
+    /// The image is a system file.
+    pub image_file_system: bool,
+
+    /// The image is a DLL file. While it is an executable file, it cannot be run directly.
+    pub image_file_dll: bool,
+
+    /// The file should be run only on a uniprocessor computer.
+    pub image_file_up_system_only: bool,
+
+    /// The bytes of the word are reversed. This flag is obsolete.
+    pub image_file_bytes_reversed_hi: bool,
+}
+
+impl<'a> Parse<'a> for FileCharacteristics {
+    fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
+    where
+        E: NomError<'a>,
+    {
+        let (rest, flags) = context("Image characteristics", le_u16)(input)?;
+        let image_file_relocs_stripped =
+            flags & FileCharacteristicsRaw::ImageFileRelocsStripped as u16 != 0;
+        let image_file_executable_image =
+            flags & FileCharacteristicsRaw::ImageFileExecutableImage as u16 != 0;
+        let image_file_line_nums_stripped =
+            flags & FileCharacteristicsRaw::ImageFileLineNumsStripped as u16 != 0;
+        let image_file_local_syms_stripped =
+            flags & FileCharacteristicsRaw::ImageFileLocalSymsStripped as u16 != 0;
+        let image_file_aggresive_ws_trim =
+            flags & FileCharacteristicsRaw::ImageFileAggresiveWsTrim as u16 != 0;
+        let image_file_large_address_aware =
+            flags & FileCharacteristicsRaw::ImageFileLargeAddressAware as u16 != 0;
+        let image_file_bytes_reversed_lo =
+            flags & FileCharacteristicsRaw::ImageFileBytesReversedLo as u16 != 0;
+        let image_file_32_bit_machine =
+            flags & FileCharacteristicsRaw::ImageFile32bitMachine as u16 != 0;
+        let image_file_debug_stripped =
+            flags & FileCharacteristicsRaw::ImageFileDebugStripped as u16 != 0;
+        let image_file_removable_run_from_swap =
+            flags & FileCharacteristicsRaw::ImageFileRemovableRunFromSwap as u16 != 0;
+        let image_file_net_run_from_swap =
+            flags & FileCharacteristicsRaw::ImageFileNetRunFromSwap as u16 != 0;
+        let image_file_system = flags & FileCharacteristicsRaw::ImageFileSystem as u16 != 0;
+        let image_file_dll = flags & FileCharacteristicsRaw::ImageFileDll as u16 != 0;
+        let image_file_up_system_only =
+            flags & FileCharacteristicsRaw::ImageFileUpSystemOnly as u16 != 0;
+        let image_file_bytes_reversed_hi =
+            flags & FileCharacteristicsRaw::ImageFileBytesReversedHi as u16 != 0;
+
+        Ok((
+            rest,
+            Self {
+                image_file_relocs_stripped,
+                image_file_executable_image,
+                image_file_line_nums_stripped,
+                image_file_local_syms_stripped,
+                image_file_aggresive_ws_trim,
+                image_file_large_address_aware,
+                image_file_bytes_reversed_lo,
+                image_file_32_bit_machine,
+                image_file_debug_stripped,
+                image_file_removable_run_from_swap,
+                image_file_net_run_from_swap,
+                image_file_system,
+                image_file_dll,
+                image_file_up_system_only,
+                image_file_bytes_reversed_hi,
+            },
+        ))
+    }
+}
+
+impl fmt::Debug for FileCharacteristics {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut dbg_struct = f.debug_struct("FileCharacteristics");
+        if self.image_file_relocs_stripped {
+            dbg_struct.field(
+                "image_file_relocs_stripped",
+                &self.image_file_relocs_stripped,
+            );
+        }
+        if self.image_file_executable_image {
+            dbg_struct.field(
+                "image_file_executable_image",
+                &self.image_file_executable_image,
+            );
+        }
+        if self.image_file_line_nums_stripped {
+            dbg_struct.field(
+                "image_file_line_nums_stripped",
+                &self.image_file_line_nums_stripped,
+            );
+        }
+        if self.image_file_local_syms_stripped {
+            dbg_struct.field(
+                "image_file_local_syms_stripped",
+                &self.image_file_local_syms_stripped,
+            );
+        }
+        if self.image_file_aggresive_ws_trim {
+            dbg_struct.field(
+                "image_file_aggresive_ws_trim",
+                &self.image_file_aggresive_ws_trim,
+            );
+        }
+        if self.image_file_large_address_aware {
+            dbg_struct.field(
+                "image_file_large_address_aware",
+                &self.image_file_large_address_aware,
+            );
+        }
+        if self.image_file_bytes_reversed_lo {
+            dbg_struct.field(
+                "image_file_bytes_reversed_lo",
+                &self.image_file_bytes_reversed_lo,
+            );
+        }
+        if self.image_file_32_bit_machine {
+            dbg_struct.field("image_file_32_bit_machine", &self.image_file_32_bit_machine);
+        }
+        if self.image_file_debug_stripped {
+            dbg_struct.field("image_file_debug_stripped", &self.image_file_debug_stripped);
+        }
+        if self.image_file_removable_run_from_swap {
+            dbg_struct.field(
+                "image_file_removable_run_from_swap",
+                &self.image_file_removable_run_from_swap,
+            );
+        }
+        if self.image_file_net_run_from_swap {
+            dbg_struct.field(
+                "image_file_net_run_from_swap",
+                &self.image_file_net_run_from_swap,
+            );
+        }
+        if self.image_file_system {
+            dbg_struct.field("image_file_system", &self.image_file_system);
+        }
+        if self.image_file_dll {
+            dbg_struct.field("image_file_dll", &self.image_file_dll);
+        }
+        if self.image_file_up_system_only {
+            dbg_struct.field("image_file_up_system_only", &self.image_file_up_system_only);
+        }
+        if self.image_file_bytes_reversed_hi {
+            dbg_struct.field(
+                "image_file_bytes_reversed_hi",
+                &self.image_file_bytes_reversed_hi,
+            );
+        }
+        dbg_struct.finish_non_exhaustive()
+    }
+}
+
+impl fmt::Display for FileCharacteristics {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut comma = "";
+        if self.image_file_relocs_stripped {
+            write!(f, "{}relocs_stripped", comma)?;
+            comma = ",";
+        }
+        if self.image_file_executable_image {
+            write!(f, "{}executable_image", comma)?;
+            comma = ",";
+        }
+        if self.image_file_line_nums_stripped {
+            write!(f, "{}line_nums_stripped", comma)?;
+            comma = ",";
+        }
+        if self.image_file_local_syms_stripped {
+            write!(f, "{}local_syms_stripped", comma)?;
+            comma = ",";
+        }
+        if self.image_file_aggresive_ws_trim {
+            write!(f, "{}aggresive_ws_trim", comma)?;
+            comma = ",";
+        }
+        if self.image_file_large_address_aware {
+            write!(f, "{}large_address_aware", comma)?;
+            comma = ",";
+        }
+        if self.image_file_bytes_reversed_lo {
+            write!(f, "{}bytes_reversed_lo", comma)?;
+            comma = ",";
+        }
+        if self.image_file_32_bit_machine {
+            write!(f, "{}32_bit_machine", comma)?;
+            comma = ",";
+        }
+        if self.image_file_debug_stripped {
+            write!(f, "{}debug_stripped", comma)?;
+            comma = ",";
+        }
+        if self.image_file_removable_run_from_swap {
+            write!(f, "{}removable_run_from_swap", comma)?;
+            comma = ",";
+        }
+        if self.image_file_net_run_from_swap {
+            write!(f, "{}net_run_from_swap", comma)?;
+            comma = ",";
+        }
+        if self.image_file_system {
+            write!(f, "{}system", comma)?;
+            comma = ",";
+        }
+        if self.image_file_dll {
+            write!(f, "{}dll", comma)?;
+            comma = ",";
+        }
+        if self.image_file_up_system_only {
+            write!(f, "{}up_system_only", comma)?;
+            comma = ",";
+        }
+        if self.image_file_bytes_reversed_hi {
+            write!(f, "{}bytes_reversed_hi", comma)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, PartialEq, Primitive)]
 #[repr(u16)]
 pub enum OptionalHeaderMagic {
     Header32 = 0x10b,
     Header64 = 0x20b,
     HeaderRom = 0x107,
+}
+
+impl fmt::Display for OptionalHeaderMagic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Header32 => write!(f, "32 bits (0x{:x})", *self as u16),
+            Self::Header64 => write!(f, "64 bits (0x{:x})", *self as u16),
+            Self::HeaderRom => write!(f, "ROM (0x{:x})", *self as u16),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Primitive)]
@@ -41,6 +366,25 @@ pub enum SubSystem {
     EfiRom = 13,
     Xbox = 14,
     WindowsBootApplication = 16,
+}
+
+impl fmt::Display for SubSystem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Native => f.write_str("native"),
+            Self::WindowsGui => f.write_str("windows gui"),
+            Self::WindowsCui => f.write_str("windows cui"),
+            Self::OS2Cui => f.write_str("OS2 cui"),
+            Self::PosixCui => f.write_str("posix cui"),
+            Self::WindowsCeGui => f.write_str("windows CE gui"),
+            Self::EfiApplication => f.write_str("EFI application"),
+            Self::EfiBootServiceDriver => f.write_str("EFI boot service driver"),
+            Self::EfiRuntimeDriver => f.write_str("EFI runtime driver"),
+            Self::EfiRom => f.write_str("EFI ROM"),
+            Self::Xbox => f.write_str("Xbox"),
+            Self::WindowsBootApplication => f.write_str("Windows boot application"),
+        }
+    }
 }
 
 #[repr(u16)]
@@ -128,12 +472,75 @@ impl fmt::Debug for DllCharacteristics {
     }
 }
 
+impl fmt::Display for DllCharacteristics {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut comma = "";
+        if self.reserved1 {
+            write!(f, "{}reserved1", comma)?;
+            comma = ",";
+        }
+        if self.reserved2 {
+            write!(f, "{}reserved2", comma)?;
+            comma = ",";
+        }
+        if self.reserved3 {
+            write!(f, "{}reserved3", comma)?;
+            comma = ",";
+        }
+        if self.reserved4 {
+            write!(f, "{}reserved4", comma)?;
+            comma = ",";
+        }
+        if self.dynamic_base {
+            write!(f, "{}dynamic_base", comma)?;
+            comma = ",";
+        }
+        if self.force_integrity {
+            write!(f, "{}force_integrity", comma)?;
+            comma = ",";
+        }
+        if self.nx_compat {
+            write!(f, "{}nx_compat", comma)?;
+            comma = ",";
+        }
+        if self.no_isolation {
+            write!(f, "{}no_isolation", comma)?;
+            comma = ",";
+        }
+        if self.no_seh {
+            write!(f, "{}no_seh", comma)?;
+            comma = ",";
+        }
+        if self.no_bind {
+            write!(f, "{}no_bind", comma)?;
+            comma = ",";
+        }
+        if self.reserved5 {
+            write!(f, "{}reserved5", comma)?;
+            comma = ",";
+        }
+        if self.wdm_driver {
+            write!(f, "{}wdm_driver", comma)?;
+            comma = ",";
+        }
+        if self.reserved6 {
+            write!(f, "{}reserved6", comma)?;
+            comma = ",";
+        }
+        if self.terminal_server_aware {
+            write!(f, "{}terminal_server_aware", comma)?;
+        }
+
+        Ok(())
+    }
+}
+
 impl<'a> Parse<'a> for DllCharacteristics {
     fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
     where
         E: NomError<'a>,
     {
-        let (rest, flags) = context("Dll characteristics", be_u16)(input)?;
+        let (rest, flags) = context("Dll characteristics", le_u16)(input)?;
         let reserved1 = flags & DllCharacteristicsRaw::Reserved1 as u16 != 0;
         let reserved2 = flags & DllCharacteristicsRaw::Reserved2 as u16 != 0;
         let reserved3 = flags & DllCharacteristicsRaw::Reserved3 as u16 != 0;
@@ -399,6 +806,180 @@ impl fmt::Debug for SectionCharacteristics {
         }
 
         dbg_struct.finish_non_exhaustive()
+    }
+}
+
+impl fmt::Display for SectionCharacteristics {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut comma = "";
+        if self.reserved_1 {
+            write!(f, "{}reserved_1", comma)?;
+            comma = ",";
+        }
+        if self.reserved_2 {
+            write!(f, "{}reserved_2", comma)?;
+            comma = ",";
+        }
+        if self.reserved_3 {
+            write!(f, "{}reserved_3", comma)?;
+            comma = ",";
+        }
+        if self.type_no_pad {
+            write!(f, "{}type_no_pad", comma)?;
+            comma = ",";
+        }
+        if self.reserved_4 {
+            write!(f, "{}reserved_4", comma)?;
+            comma = ",";
+        }
+        if self.contains_code {
+            write!(f, "{}contains_code", comma)?;
+            comma = ",";
+        }
+        if self.contains_initialized_data {
+            write!(f, "{}contains_initialized_data", comma)?;
+            comma = ",";
+        }
+        if self.contains_uninitialized_data {
+            write!(f, "{}contains_uninitialized_data", comma)?;
+            comma = ",";
+        }
+        if self.link_other {
+            write!(f, "{}link_other", comma)?;
+            comma = ",";
+        }
+        if self.link_info {
+            write!(f, "{}link_info", comma)?;
+            comma = ",";
+        }
+        if self.reserved_5 {
+            write!(f, "{}reserved_5", comma)?;
+            comma = ",";
+        }
+        if self.link_removed {
+            write!(f, "{}link_removed", comma)?;
+            comma = ",";
+        }
+        if self.link_comdat {
+            write!(f, "{}link_comdat", comma)?;
+            comma = ",";
+        }
+        if self.reserved_6 {
+            write!(f, "{}reserved_6", comma)?;
+            comma = ",";
+        }
+        if self.no_defer_speculative_exceptions {
+            write!(f, "{}no_defer_speculative_exceptions", comma)?;
+            comma = ",";
+        }
+        if self.global_pointer_references {
+            write!(f, "{}global_pointer_references", comma)?;
+            comma = ",";
+        }
+        if self.reserved_7 {
+            write!(f, "{}reserved_7", comma)?;
+            comma = ",";
+        }
+        if self.memory_purgeable {
+            write!(f, "{}memory_purgeable", comma)?;
+            comma = ",";
+        }
+        if self.memory_locked {
+            write!(f, "{}memory_locked", comma)?;
+            comma = ",";
+        }
+        if self.memory_preload {
+            write!(f, "{}memory_preload", comma)?;
+            comma = ",";
+        }
+        if self.align_1_bytes {
+            write!(f, "{}align_1_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_2_bytes {
+            write!(f, "{}align_2_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_4_bytes {
+            write!(f, "{}align_4_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_8_bytes {
+            write!(f, "{}align_8_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_16_bytes {
+            write!(f, "{}align_16_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_32_bytes {
+            write!(f, "{}align_32_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_64_bytes {
+            write!(f, "{}align_64_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_128_bytes {
+            write!(f, "{}align_128_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_256_bytes {
+            write!(f, "{}align_256_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_512_bytes {
+            write!(f, "{}align_512_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_1024_bytes {
+            write!(f, "{}align_1024_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_2048_bytes {
+            write!(f, "{}align_2048_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_4096_bytes {
+            write!(f, "{}align_4096_bytes", comma)?;
+            comma = ",";
+        }
+        if self.align_8192_bytes {
+            write!(f, "{}align_8192_bytes", comma)?;
+            comma = ",";
+        }
+        if self.link_n_relec_overflow {
+            write!(f, "{}link_n_relec_overflow", comma)?;
+            comma = ",";
+        }
+        if self.memory_discardable {
+            write!(f, "{}memory_discardable", comma)?;
+            comma = ",";
+        }
+        if self.memory_not_cached {
+            write!(f, "{}memory_not_cached", comma)?;
+            comma = ",";
+        }
+        if self.memory_not_paged {
+            write!(f, "{}memory_not_paged", comma)?;
+            comma = ",";
+        }
+        if self.memory_shared {
+            write!(f, "{}memory_shared", comma)?;
+            comma = ",";
+        }
+        if self.memory_execute {
+            write!(f, "{}memory_execute", comma)?;
+            comma = ",";
+        }
+        if self.memory_read {
+            write!(f, "{}memory_read", comma)?;
+            comma = ",";
+        }
+        if self.memory_write {
+            write!(f, "{}memory_write", comma)?;
+        }
+        Ok(())
     }
 }
 

@@ -1,13 +1,14 @@
 use nom::branch::alt;
 use nom::bytes::complete::{take, take_until1};
 use nom::combinator::{map, map_opt, map_parser, verify};
-use nom::error::context;
+use nom::error::{context, ParseError};
 use nom::multi::{count, length_count};
 use nom::number::complete::{be_u16, be_u32, le_u16, le_u32, le_u64, le_u8};
 use nom::sequence::tuple;
 
 use crate::enums::{
-    DllCharacteristics, FileMachine, OptionalHeaderMagic, SectionCharacteristics, SubSystem,
+    DllCharacteristics, FileCharacteristics, FileMachine, OptionalHeaderMagic,
+    SectionCharacteristics, SubSystem,
 };
 use crate::structures::{
     DataDirectory, DosHeader, FileHeader, OptionalHeader, OptionalHeader32, OptionalHeader64,
@@ -15,14 +16,13 @@ use crate::structures::{
 };
 use crate::{NomError, Parse};
 
-fn count_fixed<'a, O, E, F, const N: usize>(
-    mut f: F,
-) -> impl FnMut(&'a [u8]) -> nom::IResult<&'a [u8], [O; N], E>
+fn count_fixed<I, O, E, F, const N: usize>(mut f: F) -> impl FnMut(I) -> nom::IResult<I, [O; N], E>
 where
-    F: nom::Parser<&'a [u8], O, E>,
-    E: NomError<'a>,
+    I: Clone + PartialEq,
+    F: nom::Parser<I, O, E>,
+    E: ParseError<I>,
 {
-    move |i: &'a [u8]| {
+    move |i: I| {
         use std::mem::MaybeUninit;
         let mut input = i;
         let mut array: [MaybeUninit<O>; N] = MaybeUninit::uninit_array();
@@ -143,7 +143,7 @@ impl<'a> Parse<'a> for FileHeader {
                 le_u32,
                 le_u32,
                 le_u16,
-                le_u16,
+                FileCharacteristics::parse,
             )),
         )(input)?;
 
@@ -266,6 +266,18 @@ impl<'a> Parse<'a> for OptionalHeader32 {
                 )),
             )),
         )(input)?;
+
+        if size_of_image % file_alignment != 0 {
+            return Err(nom::Err::Failure(E::add_context(
+                input,
+                "Optional header 32",
+                E::add_context(
+                    input,
+                    "`size_of_image` is not aligned with `file_alignment`",
+                    E::from_error_kind(input, nom::error::ErrorKind::Verify),
+                ),
+            )));
+        }
 
         Ok((
             rest,
@@ -391,6 +403,17 @@ impl<'a> Parse<'a> for OptionalHeader64 {
             )),
         )(input)?;
 
+        if size_of_image % file_alignment != 0 {
+            return Err(nom::Err::Failure(E::add_context(
+                input,
+                "Optional header 32",
+                E::add_context(
+                    input,
+                    "`size_of_image` is not aligned with `file_alignment`",
+                    E::from_error_kind(input, nom::error::ErrorKind::Verify),
+                ),
+            )));
+        }
         Ok((
             rest,
             Self {
@@ -529,20 +552,11 @@ impl<'a> Parse<'a> for PeHeader<'a> {
         let (rest, (signature, file_header, optional_header)) = context(
             "PE header",
             tuple((
-                verify(be_u32, |magic| {
-                    eprintln!("    magic = {:x?}", magic.to_be_bytes());
-                    eprintln!("ref_magic = {:x?}", b"PE\0\0");
-                    &magic.to_be_bytes() == b"PE\0\0"
-                }),
+                verify(be_u32, |magic| &magic.to_be_bytes() == b"PE\0\0"),
                 FileHeader::parse,
                 OptionalHeader::parse,
             )),
         )(input)?;
-        eprintln!("OptionalHeader.size() = {:x}", optional_header.size());
-        eprintln!(
-            "file_header.size_of_optional_header = {:x}",
-            file_header.size_of_optional_header
-        );
         if optional_header.size() != file_header.size_of_optional_header as usize {
             let e = E::from_error_kind(input, nom::error::ErrorKind::Verify);
             return Err(nom::Err::Failure(E::add_context(
@@ -551,7 +565,7 @@ impl<'a> Parse<'a> for PeHeader<'a> {
                 e,
             )));
         }
-        let (_, sections) = context(
+        let (_rest, sections) = context(
             "PE header/sections",
             count(
                 SectionHeader::parse,
@@ -563,7 +577,7 @@ impl<'a> Parse<'a> for PeHeader<'a> {
             optional_header.size_of_image(),
             input.len()
         );
-        let (rest, data) = context("PE header/data", take(optional_header.size_of_image()))(input)?;
+        let (rest, data) = take(input.len().min(optional_header.size_of_image()))(input)?;
 
         Ok((
             rest,

@@ -1,7 +1,8 @@
 use std::fmt;
 
 use crate::enums::{
-    DllCharacteristics, FileMachine, OptionalHeaderMagic, SectionCharacteristics, SubSystem,
+    DllCharacteristics, FileCharacteristics, FileMachine, OptionalHeaderMagic,
+    SectionCharacteristics, SubSystem,
 };
 
 #[derive(Debug)]
@@ -27,6 +28,14 @@ pub struct DosHeader {
     pub e_lfanew: u32,
 }
 
+impl fmt::Display for DosHeader {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
+        write!(f, "{offset}magic: 0x{:04x}\n", self.e_magic)?;
+        write!(f, "{offset}lfanew: 0x:{:x}\n", self.e_lfanew)
+    }
+}
+
 #[derive(Debug)]
 pub struct FileHeader {
     pub machine: FileMachine,
@@ -35,13 +44,39 @@ pub struct FileHeader {
     pub pointer_to_symbol_table: u32,
     pub number_of_symbols: u32,
     pub size_of_optional_header: u16,
-    pub characteristics: u16,
+    pub characteristics: FileCharacteristics,
+}
+
+impl fmt::Display for FileHeader {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
+        write!(f, "{offset}machine: {}\n", self.machine)?;
+        write!(
+            f,
+            "{offset}number_of_sections: {}\n",
+            self.number_of_sections
+        )?;
+        write!(f, "{offset}number_of_symbols: {}\n", self.number_of_symbols)?;
+        write!(f, "{offset}characteristics: {}\n", self.characteristics)
+    }
 }
 
 #[derive(Debug)]
 pub struct DataDirectory {
     pub virtual_address: u32,
     pub size: u32,
+}
+
+impl fmt::Display for DataDirectory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
+        write!(
+            f,
+            "{offset}virtual_address: 0x{:04x}\n",
+            self.virtual_address
+        )?;
+        write!(f, "{offset}size: 0x{:x}\n", self.size)
+    }
 }
 
 #[derive(Debug)]
@@ -84,6 +119,116 @@ impl OptionalHeader32 {
     }
 }
 
+impl fmt::Display for OptionalHeader32 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = f.width().unwrap_or_default() + 1;
+        let offset = "  ".repeat(width);
+        write!(f, "{offset}magic: {}\n", self.magic)?;
+        write!(
+            f,
+            "{offset}major_linker_version: {}\n",
+            self.major_linker_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_linker_version: {}\n",
+            self.minor_linker_version
+        )?;
+        write!(f, "{offset}size_of_code: {}\n", self.size_of_code)?;
+        write!(
+            f,
+            "{offset}size_of_initialized_data: {}\n",
+            self.size_of_initialized_data
+        )?;
+        write!(
+            f,
+            "{offset}size_of_uninitialized_data: {}\n",
+            self.size_of_uninitialized_data
+        )?;
+        write!(
+            f,
+            "{offset}address_of_entry_point: {}\n",
+            self.address_of_entry_point
+        )?;
+        write!(f, "{offset}base_of_code: {}\n", self.base_of_code)?;
+        write!(f, "{offset}base_of_data: {}\n", self.base_of_data)?;
+        write!(f, "{offset}image_base: {}\n", self.image_base)?;
+        write!(f, "{offset}section_alignment: {}\n", self.section_alignment)?;
+        write!(f, "{offset}file_alignment: {}\n", self.file_alignment)?;
+        write!(
+            f,
+            "{offset}major_operating_system_version: {}\n",
+            self.major_operating_system_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_operating_system_version: {}\n",
+            self.minor_operating_system_version
+        )?;
+        write!(
+            f,
+            "{offset}major_image_version: {}\n",
+            self.major_image_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_image_version: {}\n",
+            self.minor_image_version
+        )?;
+        write!(
+            f,
+            "{offset}major_subsystem_version: {}\n",
+            self.major_subsystem_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_subsystem_version: {}\n",
+            self.minor_subsystem_version
+        )?;
+        write!(
+            f,
+            "{offset}win32_version_value: {}\n",
+            self.win32_version_value
+        )?;
+        write!(f, "{offset}size_of_image: {}\n", self.size_of_image)?;
+        write!(f, "{offset}size_of_headers: {}\n", self.size_of_headers)?;
+        write!(f, "{offset}check_sum: {}\n", self.check_sum)?;
+        write!(f, "{offset}subsystem: {}\n", self.subsystem)?;
+        write!(
+            f,
+            "{offset}dll_characteristics: {}\n",
+            self.dll_characteristics
+        )?;
+        write!(
+            f,
+            "{offset}size_of_stack_reserve: {}\n",
+            self.size_of_stack_reserve
+        )?;
+        write!(
+            f,
+            "{offset}size_of_stack_commit: {}\n",
+            self.size_of_stack_commit
+        )?;
+        write!(
+            f,
+            "{offset}size_of_heap_reserve: {}\n",
+            self.size_of_heap_reserve
+        )?;
+        write!(
+            f,
+            "{offset}size_of_heap_commit: {}\n",
+            self.size_of_heap_commit
+        )?;
+        write!(f, "{offset}loader_flags: {}\n", self.loader_flags)?;
+        write!(f, "{offset}data_directory:\n")?;
+        for dd in &self.data_directory[..] {
+            write!(f, "{:width$}\n", dd)?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct OptionalHeader64 {
     pub magic: OptionalHeaderMagic,
@@ -123,10 +268,127 @@ impl OptionalHeader64 {
     }
 }
 
+impl fmt::Display for OptionalHeader64 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = f.width().unwrap_or_default() + 1;
+        let offset = "  ".repeat(width);
+        write!(
+            f,
+            "{offset}major_linker_version: {}\n",
+            self.major_linker_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_linker_version: {}\n",
+            self.minor_linker_version
+        )?;
+        write!(f, "{offset}size_of_code: {}\n", self.size_of_code)?;
+        write!(
+            f,
+            "{offset}size_of_initialized_data: {}\n",
+            self.size_of_initialized_data
+        )?;
+        write!(
+            f,
+            "{offset}size_of_uninitialized_data: {}\n",
+            self.size_of_uninitialized_data
+        )?;
+        write!(
+            f,
+            "{offset}address_of_entry_point: {}\n",
+            self.address_of_entry_point
+        )?;
+        write!(f, "{offset}base_of_code: {}\n", self.base_of_code)?;
+        write!(f, "{offset}image_base: {}\n", self.image_base)?;
+        write!(f, "{offset}section_alignment: {}\n", self.section_alignment)?;
+        write!(f, "{offset}file_alignment: {}\n", self.file_alignment)?;
+        write!(
+            f,
+            "{offset}major_operating_system_version: {}\n",
+            self.major_operating_system_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_operating_system_version: {}\n",
+            self.minor_operating_system_version
+        )?;
+        write!(
+            f,
+            "{offset}major_image_version: {}\n",
+            self.major_image_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_image_version: {}\n",
+            self.minor_image_version
+        )?;
+        write!(
+            f,
+            "{offset}major_subsystem_version: {}\n",
+            self.major_subsystem_version
+        )?;
+        write!(
+            f,
+            "{offset}minor_subsystem_version: {}\n",
+            self.minor_subsystem_version
+        )?;
+        write!(
+            f,
+            "{offset}win32_version_value: {}\n",
+            self.win32_version_value
+        )?;
+        write!(f, "{offset}size_of_image: {}\n", self.size_of_image)?;
+        write!(f, "{offset}size_of_headers: {}\n", self.size_of_headers)?;
+        write!(f, "{offset}check_sum: {}\n", self.check_sum)?;
+        write!(f, "{offset}subsystem: {}\n", self.subsystem)?;
+        write!(
+            f,
+            "{offset}dll_characteristics: {}\n",
+            self.dll_characteristics
+        )?;
+        write!(
+            f,
+            "{offset}size_of_stack_reserve: {}\n",
+            self.size_of_stack_reserve
+        )?;
+        write!(
+            f,
+            "{offset}size_of_stack_commit: {}\n",
+            self.size_of_stack_commit
+        )?;
+        write!(
+            f,
+            "{offset}size_of_heap_reserve: {}\n",
+            self.size_of_heap_reserve
+        )?;
+        write!(
+            f,
+            "{offset}size_of_heap_commit: {}\n",
+            self.size_of_heap_commit
+        )?;
+        write!(f, "{offset}loader_flags: {}\n", self.loader_flags)?;
+        write!(f, "{offset}data_directory:\n")?;
+        for dd in &self.data_directory[..] {
+            write!(f, "{:width$}\n", dd)?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub enum OptionalHeader {
     I386(OptionalHeader32),
     AMD64(OptionalHeader64),
+}
+
+impl fmt::Display for OptionalHeader {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::I386(ref oh) => fmt::Display::fmt(oh, f),
+            Self::AMD64(ref oh) => fmt::Display::fmt(oh, f),
+        }
+    }
 }
 
 impl OptionalHeader {
@@ -151,6 +413,15 @@ pub enum SectionName<'a> {
     Offset(usize),
 }
 
+impl<'a> fmt::Display for SectionName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Short(name) => f.write_str(name),
+            Self::Offset(off) => write!(f, "Long name at 0x{:x}", off),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct SectionHeader<'a> {
     pub name: SectionName<'a>,
@@ -163,6 +434,43 @@ pub struct SectionHeader<'a> {
     pub number_of_relocations: u16,
     pub number_of_linenumbers: u16,
     pub characteristics: SectionCharacteristics,
+}
+
+impl<'a> fmt::Display for SectionHeader<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let offset = "  ".repeat(f.width().unwrap_or_default() + 1);
+        write!(f, "{offset}name: {}\n", self.name)?;
+        write!(f, "{offset}physical_address: {}\n", self.physical_address)?;
+        write!(f, "{offset}virtual_address: {}\n", self.virtual_address)?;
+        write!(f, "{offset}size_of_raw_data: {}\n", self.size_of_raw_data)?;
+        write!(
+            f,
+            "{offset}pointer_to_raw_data: {}\n",
+            self.pointer_to_raw_data
+        )?;
+        write!(
+            f,
+            "{offset}pointer_to_relocations: {}\n",
+            self.pointer_to_relocations
+        )?;
+        write!(
+            f,
+            "{offset}pointer_to_linenumbers: {}\n",
+            self.pointer_to_linenumbers
+        )?;
+        write!(
+            f,
+            "{offset}number_of_relocations: {}\n",
+            self.number_of_relocations
+        )?;
+        write!(
+            f,
+            "{offset}number_of_linenumbers: {}\n",
+            self.number_of_linenumbers
+        )?;
+        write!(f, "{offset}characteristics: {}\n", self.characteristics)?;
+        Ok(())
+    }
 }
 
 pub struct PeHeader<'a> {
@@ -181,5 +489,25 @@ impl<'a> fmt::Debug for PeHeader<'a> {
             .field("optional_header", &self.optional_header)
             .field("sections", &self.sections)
             .finish()
+    }
+}
+
+impl<'a> fmt::Display for PeHeader<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let width = f.width().unwrap_or_default() + 1;
+        let offset = "  ".repeat(width);
+        write!(f, "{offset}signature: {:08x}\n", self.signature)?;
+        write!(f, "{offset}file_header:\n{:width$}\n", self.file_header)?;
+        write!(
+            f,
+            "{offset}optional_header:\n{:width$}\n",
+            self.optional_header
+        )?;
+        write!(f, "{offset}sections:\n")?;
+        for section in &self.sections {
+            write!(f, "{:width$}\n", section)?;
+        }
+
+        Ok(())
     }
 }
