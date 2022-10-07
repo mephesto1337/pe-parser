@@ -65,6 +65,11 @@ impl fmt::Display for FileHeader {
         write!(f, "{offset}time_date_stamp: {:?}\n", time)?;
         write!(
             f,
+            "{offset}pointer_to_symbol_table: 0x{:x}\n",
+            self.pointer_to_symbol_table
+        )?;
+        write!(
+            f,
             "{offset}number_of_symbols: 0x{:x}\n",
             self.number_of_symbols
         )?;
