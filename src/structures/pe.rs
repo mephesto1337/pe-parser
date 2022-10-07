@@ -1,3 +1,11 @@
+use nom::combinator::verify;
+use nom::error::context;
+use nom::multi::count;
+use nom::number::complete::be_u32;
+use nom::sequence::tuple;
+
+use crate::{NomError, Parse};
+
 use std::fmt;
 
 use super::{FileHeader, OptionalHeader, SectionHeader};
@@ -37,5 +45,51 @@ impl<'a> fmt::Display for PeHeader<'a> {
         }
 
         Ok(())
+    }
+}
+
+impl<'a> Parse<'a> for PeHeader<'a> {
+    fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
+    where
+        E: NomError<'a>,
+    {
+        let (rest, (signature, file_header, optional_header)) = context(
+            "PE header",
+            tuple((
+                verify(be_u32, |magic| &magic.to_be_bytes() == b"PE\0\0"),
+                FileHeader::parse,
+                OptionalHeader::parse,
+            )),
+        )(input)?;
+        if optional_header.size() != file_header.size_of_optional_header as usize {
+            let e = E::from_error_kind(input, nom::error::ErrorKind::Verify);
+            return Err(nom::Err::Failure(E::add_context(
+                input,
+                "Optional header does not match",
+                e,
+            )));
+        }
+        let (_rest, sections) = context(
+            "PE header/sections",
+            count(
+                SectionHeader::parse,
+                file_header.number_of_sections as usize,
+            ),
+        )(rest)?;
+        eprintln!(
+            "Will take {} bytes out of {}",
+            optional_header.size_of_image(),
+            input.len()
+        );
+
+        Ok((
+            rest,
+            Self {
+                signature,
+                file_header,
+                optional_header,
+                sections,
+            },
+        ))
     }
 }

@@ -1,4 +1,11 @@
+use nom::error::context;
+use nom::number::complete::{le_u16, le_u32};
+use nom::sequence::tuple;
+
+use crate::{NomError, Parse};
+
 use crate::enums::{FileCharacteristics, FileMachine};
+
 use std::fmt;
 
 #[derive(Debug)]
@@ -42,5 +49,49 @@ impl fmt::Display for FileHeader {
             self.size_of_optional_header
         )?;
         write!(f, "{offset}characteristics: {}\n", self.characteristics)
+    }
+}
+
+impl<'a> Parse<'a> for FileHeader {
+    fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
+    where
+        E: NomError<'a>,
+    {
+        let (
+            rest,
+            (
+                machine,
+                number_of_sections,
+                time_date_stamp,
+                pointer_to_symbol_table,
+                number_of_symbols,
+                size_of_optional_header,
+                characteristics,
+            ),
+        ) = context(
+            "File header",
+            tuple((
+                FileMachine::parse,
+                le_u16,
+                le_u32,
+                le_u32,
+                le_u32,
+                le_u16,
+                FileCharacteristics::parse,
+            )),
+        )(input)?;
+
+        Ok((
+            rest,
+            Self {
+                machine,
+                number_of_sections,
+                time_date_stamp,
+                pointer_to_symbol_table,
+                number_of_symbols,
+                size_of_optional_header,
+                characteristics,
+            },
+        ))
     }
 }

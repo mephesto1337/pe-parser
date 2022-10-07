@@ -1,4 +1,4 @@
-use pe::{DosHeader, Parse, PeHeader};
+use pe::{Parse, Pe};
 
 use clap::{App, Arg};
 use std::convert::From;
@@ -23,7 +23,17 @@ impl From<nom::Err<nom::error::VerboseError<&'_ [u8]>>> for Error {
                 errors: e
                     .errors
                     .drain(..)
-                    .map(|(input, ek)| (input[..16].to_owned(), ek))
+                    .map(|(input, ek)| {
+                        (
+                            if input.len() > 16 {
+                                &input[..16]
+                            } else {
+                                input
+                            }
+                            .to_owned(),
+                            ek,
+                        )
+                    })
                     .collect(),
             }
         }
@@ -50,9 +60,7 @@ fn main() -> Result<(), Error> {
 
     println!("Loaded {} bytes from {}", pefilesize, pefilename);
 
-    let (_, dh) = DosHeader::parse::<nom::error::VerboseError<&[u8]>>(&buf[..])?;
-    println!("DOS:\n{}", &dh);
-    let (_, pe) = PeHeader::parse::<nom::error::VerboseError<&[u8]>>(&buf[dh.e_lfanew as usize..])?;
+    let (_, pe) = Pe::parse::<nom::error::VerboseError<&[u8]>>(&buf[..])?;
     println!("PE:\n{}", &pe);
     Ok(())
 }

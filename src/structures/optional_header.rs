@@ -1,3 +1,12 @@
+use nom::branch::alt;
+use nom::combinator::{map, verify};
+use nom::error::context;
+use nom::multi::length_count;
+use nom::number::complete::{le_u16, le_u32, le_u64, le_u8};
+use nom::sequence::tuple;
+
+use crate::{NomError, Parse};
+
 use num_traits::FromPrimitive;
 
 use crate::enums::{DllCharacteristics, ImageDataDirectoryIndex, OptionalHeaderMagic, SubSystem};
@@ -159,6 +168,144 @@ impl fmt::Display for OptionalHeader32 {
     }
 }
 
+impl<'a> Parse<'a> for OptionalHeader32 {
+    fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
+    where
+        E: NomError<'a>,
+    {
+        let (
+            rest,
+            (
+                (
+                    magic,
+                    major_linker_version,
+                    minor_linker_version,
+                    size_of_code,
+                    size_of_initialized_data,
+                    size_of_uninitialized_data,
+                    address_of_entry_point,
+                    base_of_code,
+                    base_of_data,
+                    image_base,
+                    section_alignment,
+                    file_alignment,
+                    major_operating_system_version,
+                    minor_operating_system_version,
+                ),
+                (
+                    major_image_version,
+                    minor_image_version,
+                    major_subsystem_version,
+                    minor_subsystem_version,
+                    win32_version_value,
+                    size_of_image,
+                    size_of_headers,
+                    check_sum,
+                    subsystem,
+                    dll_characteristics,
+                    size_of_stack_reserve,
+                    size_of_stack_commit,
+                    size_of_heap_reserve,
+                    size_of_heap_commit,
+                    loader_flags,
+                    data_directory,
+                ),
+            ),
+        ) = context(
+            "Optional header 32",
+            tuple((
+                tuple((
+                    verify(OptionalHeaderMagic::parse, |magic| {
+                        magic == &OptionalHeaderMagic::Header32
+                    }),
+                    le_u8,
+                    le_u8,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u16,
+                    le_u16,
+                )),
+                tuple((
+                    le_u16,
+                    le_u16,
+                    le_u16,
+                    le_u16,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    SubSystem::parse,
+                    DllCharacteristics::parse,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    length_count(
+                        verify(le_u32, |count: &u32| count <= &16),
+                        DataDirectory::parse,
+                    ),
+                )),
+            )),
+        )(input)?;
+
+        if size_of_image % file_alignment != 0 {
+            return Err(nom::Err::Failure(E::add_context(
+                input,
+                "Optional header 32",
+                E::add_context(
+                    input,
+                    "`size_of_image` is not aligned with `file_alignment`",
+                    E::from_error_kind(input, nom::error::ErrorKind::Verify),
+                ),
+            )));
+        }
+
+        Ok((
+            rest,
+            Self {
+                magic,
+                major_linker_version,
+                minor_linker_version,
+                size_of_code,
+                size_of_initialized_data,
+                size_of_uninitialized_data,
+                address_of_entry_point,
+                base_of_code,
+                base_of_data,
+                image_base,
+                section_alignment,
+                file_alignment,
+                major_operating_system_version,
+                minor_operating_system_version,
+                major_image_version,
+                minor_image_version,
+                major_subsystem_version,
+                minor_subsystem_version,
+                win32_version_value,
+                size_of_image,
+                size_of_headers,
+                check_sum,
+                subsystem,
+                dll_characteristics,
+                size_of_stack_reserve,
+                size_of_stack_commit,
+                size_of_heap_reserve,
+                size_of_heap_commit,
+                loader_flags,
+                data_directory,
+            },
+        ))
+    }
+}
+
 #[derive(Debug)]
 pub struct OptionalHeader64 {
     pub magic: OptionalHeaderMagic,
@@ -316,6 +463,140 @@ impl fmt::Display for OptionalHeader64 {
     }
 }
 
+impl<'a> Parse<'a> for OptionalHeader64 {
+    fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
+    where
+        E: NomError<'a>,
+    {
+        let (
+            rest,
+            (
+                (
+                    magic,
+                    major_linker_version,
+                    minor_linker_version,
+                    size_of_code,
+                    size_of_initialized_data,
+                    size_of_uninitialized_data,
+                    address_of_entry_point,
+                    base_of_code,
+                    image_base,
+                    section_alignment,
+                    file_alignment,
+                    major_operating_system_version,
+                    minor_operating_system_version,
+                    major_image_version,
+                ),
+                (
+                    minor_image_version,
+                    major_subsystem_version,
+                    minor_subsystem_version,
+                    win32_version_value,
+                    size_of_image,
+                    size_of_headers,
+                    check_sum,
+                    subsystem,
+                    dll_characteristics,
+                    size_of_stack_reserve,
+                    size_of_stack_commit,
+                    size_of_heap_reserve,
+                    size_of_heap_commit,
+                    loader_flags,
+                    data_directory,
+                ),
+            ),
+        ) = context(
+            "Optional header 64",
+            tuple((
+                tuple((
+                    verify(OptionalHeaderMagic::parse, |magic| {
+                        magic == &OptionalHeaderMagic::Header64
+                    }),
+                    le_u8,
+                    le_u8,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u64,
+                    le_u32,
+                    le_u32,
+                    le_u16,
+                    le_u16,
+                    le_u16,
+                )),
+                tuple((
+                    le_u16,
+                    le_u16,
+                    le_u16,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    le_u32,
+                    SubSystem::parse,
+                    DllCharacteristics::parse,
+                    le_u64,
+                    le_u64,
+                    le_u64,
+                    le_u64,
+                    le_u32,
+                    length_count(
+                        verify(le_u32, |count: &u32| count <= &16),
+                        DataDirectory::parse,
+                    ),
+                )),
+            )),
+        )(input)?;
+
+        if size_of_image % file_alignment != 0 {
+            return Err(nom::Err::Failure(E::add_context(
+                input,
+                "Optional header 32",
+                E::add_context(
+                    input,
+                    "`size_of_image` is not aligned with `file_alignment`",
+                    E::from_error_kind(input, nom::error::ErrorKind::Verify),
+                ),
+            )));
+        }
+        Ok((
+            rest,
+            Self {
+                magic,
+                major_linker_version,
+                minor_linker_version,
+                size_of_code,
+                size_of_initialized_data,
+                size_of_uninitialized_data,
+                address_of_entry_point,
+                base_of_code,
+                image_base,
+                section_alignment,
+                file_alignment,
+                major_operating_system_version,
+                minor_operating_system_version,
+                major_image_version,
+                minor_image_version,
+                major_subsystem_version,
+                minor_subsystem_version,
+                win32_version_value,
+                size_of_image,
+                size_of_headers,
+                check_sum,
+                subsystem,
+                dll_characteristics,
+                size_of_stack_reserve,
+                size_of_stack_commit,
+                size_of_heap_reserve,
+                size_of_heap_commit,
+                loader_flags,
+                data_directory,
+            },
+        ))
+    }
+}
+
 #[derive(Debug)]
 pub enum OptionalHeader {
     I386(OptionalHeader32),
@@ -344,5 +625,32 @@ impl OptionalHeader {
             Self::I386(ref i386) => i386.size_of_image as usize,
             Self::AMD64(ref amd64) => amd64.size_of_image as usize,
         }
+    }
+
+    pub fn get_data_directory(&self, idx: ImageDataDirectoryIndex) -> Option<&DataDirectory> {
+        let data_dir = match self {
+            Self::I386(ref oh32) => oh32.data_directory.get(idx as usize)?,
+            Self::AMD64(ref oh64) => oh64.data_directory.get(idx as usize)?,
+        };
+        if data_dir.virtual_address == 0 && data_dir.size == 0 {
+            None
+        } else {
+            Some(data_dir)
+        }
+    }
+}
+
+impl<'a> Parse<'a> for OptionalHeader {
+    fn parse<E>(input: &'a [u8]) -> nom::IResult<&'a [u8], Self, E>
+    where
+        E: NomError<'a>,
+    {
+        context(
+            "Optional header",
+            alt((
+                map(OptionalHeader32::parse, |oh| Self::I386(oh)),
+                map(OptionalHeader64::parse, |oh| Self::AMD64(oh)),
+            )),
+        )(input)
     }
 }

@@ -12,8 +12,7 @@ pub use enums::*;
 pub mod structures;
 pub use structures::*;
 
-pub mod parsers;
-pub use parsers::*;
+mod parsers;
 
 pub trait NomError<'a>:
     nom::error::ParseError<&'a [u8]> + nom::error::ContextError<&'a [u8]>
@@ -58,22 +57,22 @@ impl<'a> exe::Section for SectionHeader<'a> {
     }
 }
 
-impl<'a> exe::Exe<'a> for PeHeader<'a> {
+impl<'a> exe::Exe<'a> for Pe<'a> {
     type Item = SectionHeader<'a>;
 
     fn get_number_of_sections(&self) -> usize {
-        self.file_header.number_of_sections as usize
+        self.pe_header.file_header.number_of_sections as usize
     }
 
     fn get_section_at(&self, idx: usize) -> Option<&Self::Item> {
-        self.sections.iter().nth(idx)
+        self.pe_header.sections.iter().nth(idx)
     }
 
     fn get_section_name_at(&self, idx: usize) -> Option<&str> {
-        match self.sections.iter().nth(idx) {
+        match self.pe_header.sections.iter().nth(idx) {
             Some(s) => match s.name {
-                SectionName::Short(name) => Some(name),
-                SectionName::Offset(_offset) => {
+                Name::String(name) => Some(name),
+                Name::Rva(_rva) => {
                     todo!("Get long section name");
                 }
             },
@@ -88,11 +87,11 @@ impl<'a> exe::Exe<'a> for PeHeader<'a> {
     fn get_info(&self) -> exe::Info {
         exe::Info {
             os: String::from("windows"),
-            arch: String::from(match &self.file_header.machine {
+            arch: String::from(match &self.pe_header.file_header.machine {
                 FileMachine::MachineIA64 => "ia",
                 FileMachine::MachineI386 | FileMachine::MachineAMD64 => "x86",
             }),
-            bits: match &self.file_header.machine {
+            bits: match &self.pe_header.file_header.machine {
                 FileMachine::MachineI386 => 32,
                 FileMachine::MachineIA64 | FileMachine::MachineAMD64 => 64,
             },
@@ -136,13 +135,13 @@ pub extern "C" fn rs_pe_parse<'a>(i: *const u8, len: size_t) -> *const c_void {
     }
 }
 
-generate_c_api!(
-    PeHeader<'a>,
-    rs_pe_get_info,
-    rs_pe_free_info,
-    rs_pe_get_number_of_sections,
-    rs_pe_get_section_at,
-    rs_pe_get_data,
-    rs_pe_free_section,
-    rs_pe_free_exe
-);
+// generate_c_api!(
+//     PeHeader<'a>,
+//     rs_pe_get_info,
+//     rs_pe_free_info,
+//     rs_pe_get_number_of_sections,
+//     rs_pe_get_section_at,
+//     rs_pe_get_data,
+//     rs_pe_free_section,
+//     rs_pe_free_exe
+// );
