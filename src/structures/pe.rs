@@ -3,7 +3,6 @@ use std::fmt;
 use super::{FileHeader, OptionalHeader, SectionHeader};
 
 pub struct PeHeader<'a> {
-    pub data: &'a [u8],
     pub signature: u32,
     pub file_header: FileHeader,
     pub optional_header: OptionalHeader,
