@@ -1,5 +1,8 @@
 use std::fmt;
 
+mod import_descriptor;
+pub use import_descriptor::ImportDescriptor;
+
 #[derive(Debug)]
 pub struct DataDirectory {
     pub virtual_address: u32,

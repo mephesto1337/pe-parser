@@ -5,7 +5,7 @@ mod file_header;
 pub use file_header::FileHeader;
 
 mod data_directory;
-pub use data_directory::DataDirectory;
+pub use data_directory::{DataDirectory, ImportDescriptor};
 
 mod optional_header;
 pub use optional_header::{OptionalHeader, OptionalHeader32, OptionalHeader64};
